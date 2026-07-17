@@ -370,9 +370,28 @@ def main():
     print("Collecting dashboard data...")
     fg_data = fetch_fear_and_greed()
     market_data = fetch_market_data()
-    # Get MA spread for QQQ, IWM, and DIA only
+    # Get MA spread for QQQ, IWM, and DIA only (shown in the main page card)
     ma_spread_tickers = ("QQQ", "IWM", "DIA")
     ma_spread_data = fetch_ma_spread(tickers=ma_spread_tickers)
+    
+    # Save individual MA spread history files in a 'history' folder for modal popup requests
+    print("Generating individual ETF MA spread files...")
+    os.makedirs("history", exist_ok=True)
+    
+    # List of all sector/ETF tickers
+    all_tickers = list(market_data["relative_strength"].keys())
+    # Make sure QQQ, IWM, DIA are also covered
+    for t in ma_spread_tickers:
+        if t not in all_tickers:
+            all_tickers.append(t)
+            
+    # Generate spread data for all tickers and save as JSON files
+    for ticker in all_tickers:
+        print(f"Calculating MA spread for {ticker}...")
+        ticker_spread = fetch_ma_spread(tickers=(ticker,))
+        if ticker in ticker_spread:
+            with open(f"history/{ticker}.json", "w") as hf:
+                json.dump(ticker_spread[ticker], hf, indent=2)
     
     output = {
         "fear_greed": fg_data,

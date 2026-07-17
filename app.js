@@ -6,7 +6,6 @@ let currentSortOrder = 'desc';
 let currentMaSpreadTicker = 'QQQ';
 let maSpreadChart = null;
 let modalMaSpreadChart = null;
-let modalChartInstance = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
@@ -65,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup modal event listeners
     setupModalListeners();
-    setupEtfModalListeners();
 });
 
 async function loadData() {
@@ -365,10 +363,11 @@ function renderCharts(relStrengthData) {
         `;
         container.appendChild(card);
 
-        // Add click event to open modal with ETF price and 50DMA chart (per request)
+        // Add click event to open modal with sector MA spread chart
+        // Stop propagation to prevent triggering parent clicks
         card.addEventListener('click', (e) => {
             e.stopPropagation();
-            openEtfDetailModal(ticker, titleText);
+            openSectorModal(ticker, titleText);
         });
 
         // Render mini sparkline chart
@@ -693,7 +692,7 @@ function renderLeaderboard(query = '') {
         badge.addEventListener('click', (e) => {
             e.stopPropagation();
             const titleText = item.description ? `${item.ticker} (${item.description})` : item.ticker;
-            openEtfDetailModal(item.ticker, titleText);
+            openSectorModal(item.ticker, titleText);
         });
 
         tbody.appendChild(tr);
@@ -701,26 +700,34 @@ function renderLeaderboard(query = '') {
 }
 
 // Modal functions for sector MA spread chart
-function openSectorModal(ticker, description) {
+async function openSectorModal(ticker, description) {
     const modal = document.getElementById('sector-modal');
     const titleEl = document.getElementById('modal-sector-title');
     
-    if (!fullData || !fullData.ma_spread || !fullData.ma_spread[ticker]) {
-        console.warn(`No MA spread data available for ${ticker}`);
-        return;
-    }
-    
     // Update modal title
-    titleEl.textContent = `${ticker} - 50-Day MA Spread`;
+    titleEl.textContent = `${ticker} - 50-Day MA Spread (Loading...)`;
     
     // Show modal
     modal.classList.add('active');
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
     
-    // Render the MA spread chart for this sector
-    setTimeout(() => {
-        drawModalMaSpreadChart(fullData.ma_spread[ticker], ticker);
-    }, 100);
+    try {
+        // Fetch detailed historical spread data (per request)
+        const response = await fetch(`history/${ticker}.json?t=${new Date().getTime()}`);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch spread history for ${ticker}`);
+        }
+        const data = await response.json();
+        
+        // Restore title
+        titleEl.textContent = `${ticker} - 50-Day MA Spread`;
+        
+        // Render the MA spread chart for this sector
+        drawModalMaSpreadChart(data, ticker);
+    } catch (error) {
+        console.error('Error loading sector MA spread:', error);
+        titleEl.textContent = `${ticker} - Error Loading Spread Data`;
+    }
 }
 
 function closeSectorModal() {
@@ -907,192 +914,4 @@ function setupModalListeners() {
     });
 }
 
-// Modal setup is now called from DOMContentLoaded in the main script
 
-// Open Detail Modal with 50DMA Chart
-async function openEtfDetailModal(ticker, titleText) {
-    const modal = document.getElementById('etf-modal');
-    const modalTicker = document.getElementById('modal-ticker');
-    const modalTitle = document.getElementById('modal-title');
-    const loadingIndicator = document.getElementById('modal-loading');
-    const errorMessage = document.getElementById('modal-error');
-    const chartWrapper = document.getElementById('modal-chart-wrapper');
-
-    // Reset visibility
-    loadingIndicator.style.display = 'flex';
-    errorMessage.style.display = 'none';
-    chartWrapper.style.display = 'none';
-
-    // Set header content
-    modalTicker.textContent = ticker;
-    modalTitle.textContent = titleText;
-
-    // Show modal overlay
-    modal.classList.add('active');
-
-    try {
-        // Fetch detailed historical data (per request)
-        const response = await fetch(`history/${ticker}.json?t=${new Date().getTime()}`);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch history for ${ticker}`);
-        }
-        const data = await response.json();
-
-        // Render the 50DMA chart
-        renderModalChart(data);
-
-        // Update visibility
-        loadingIndicator.style.display = 'none';
-        chartWrapper.style.display = 'block';
-    } catch (error) {
-        console.error('Error fetching ETF history:', error);
-        loadingIndicator.style.display = 'none';
-        errorMessage.style.display = 'flex';
-    }
-}
-
-// Render Modal Price and 50DMA Chart
-function renderModalChart(data) {
-    const ctx = document.getElementById('modal-dma-chart').getContext('2d');
-
-    // Destroy existing chart if it exists to prevent overlay
-    if (modalChartInstance) {
-        modalChartInstance.destroy();
-    }
-
-    modalChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.dates,
-            datasets: [
-                {
-                    label: '50-Day Moving Average (50DMA)',
-                    data: data.dma50,
-                    borderColor: '#f97316', // Orange
-                    borderWidth: 2,
-                    borderDash: [5, 5],
-                    pointRadius: 0,
-                    pointHoverRadius: 4,
-                    fill: false,
-                    tension: 0.1
-                },
-                {
-                    label: 'Price',
-                    data: data.prices,
-                    borderColor: '#06b6d4', // Cyan
-                    borderWidth: 2.2,
-                    pointRadius: 0,
-                    pointHoverRadius: 4,
-                    pointBackgroundColor: '#06b6d4',
-                    fill: {
-                        target: 'origin',
-                        above: 'rgba(6, 182, 212, 0.03)' // Very subtle cyan fill
-                    },
-                    tension: 0.1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false
-            },
-            plugins: {
-                legend: {
-                    display: true,
-                    labels: {
-                        color: '#9ca3af',
-                        font: {
-                            family: 'Plus Jakarta Sans',
-                            size: 11
-                        }
-                    }
-                },
-                tooltip: {
-                    backgroundColor: '#1f2937',
-                    titleColor: '#9ca3af',
-                    bodyColor: '#f3f4f6',
-                    borderColor: 'rgba(255,255,255,0.08)',
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function(context) {
-                            const val = context.parsed.y;
-                            if (val === null || val === undefined) return `${context.dataset.label}: N/A`;
-                            return `${context.dataset.label}: $${val.toFixed(2)}`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.03)'
-                    },
-                    ticks: {
-                        color: '#6b7280',
-                        font: {
-                            family: 'Plus Jakarta Sans',
-                            size: 10
-                        },
-                        maxTicksLimit: 12 // Keep x-axis labels clean
-                    }
-                },
-                y: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.03)'
-                    },
-                    ticks: {
-                        color: '#6b7280',
-                        font: {
-                            family: 'Plus Jakarta Sans',
-                            size: 10
-                        },
-                        callback: function(value) {
-                            return '$' + value;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-// Close Detail Modal
-function closeEtfDetailModal() {
-    const modal = document.getElementById('etf-modal');
-    modal.classList.remove('active');
-
-    // Destroy chart on close to release resources
-    if (modalChartInstance) {
-        modalChartInstance.destroy();
-        modalChartInstance = null;
-    }
-}
-
-// ETF Detail Modal Event Listeners
-function setupEtfModalListeners() {
-    // Close modal on click of close button
-    const closeBtn = document.getElementById('etf-modal-close-btn');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closeEtfDetailModal);
-    }
-
-    // Close modal when clicking outside modal content
-    const modalOverlay = document.getElementById('etf-modal');
-    if (modalOverlay) {
-        modalOverlay.addEventListener('click', (e) => {
-            if (e.target === modalOverlay) {
-                closeEtfDetailModal();
-            }
-        });
-    }
-
-    // Close modal when pressing Escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
-            closeEtfDetailModal();
-        }
-    });
-}
