@@ -92,6 +92,9 @@ async function loadData() {
 function updateLastUpdated(isoString) {
     if (!isoString) return;
     const date = new Date(isoString);
+    const now = new Date();
+    const hoursDiff = (now - date) / (1000 * 60 * 60);
+    
     const options = { 
         month: 'short', 
         day: 'numeric', 
@@ -102,6 +105,14 @@ function updateLastUpdated(isoString) {
         timeZoneName: 'short'
     };
     document.getElementById('last-updated-text').textContent = `Last updated ${date.toLocaleDateString('en-US', options)}`;
+    
+    // Add data freshness warning if older than 24 hours
+    const updateIndicator = document.querySelector('.update-indicator');
+    if (hoursDiff > 24) {
+        updateIndicator.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+        updateIndicator.style.background = 'rgba(239, 68, 68, 0.1)';
+        document.getElementById('last-updated-text').innerHTML += ' <span style="color: #ef4444; font-weight: 600;">⚠️ Stale Data</span>';
+    }
 }
 
 // Render CNN-style dynamic Canvas Gauge
@@ -485,6 +496,20 @@ function drawMaSpreadChart(item) {
                 ctx.fillStyle = band.color;
                 ctx.fillRect(chartArea.left, yTop, chartArea.right - chartArea.left, yBottom - yTop);
             });
+
+            // Draw zero line reference
+            const zeroY = y.getPixelForValue(0);
+            if (zeroY >= chartArea.top && zeroY <= chartArea.bottom) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([6, 4]);
+                ctx.beginPath();
+                ctx.moveTo(chartArea.left, zeroY);
+                ctx.lineTo(chartArea.right, zeroY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
             ctx.restore();
         }
     };
@@ -574,14 +599,16 @@ function renderLeaderboard(query = '') {
         let valA = a[currentSortColumn];
         let valB = b[currentSortColumn];
 
-        // Format numerical sorting
+        // Format numerical sorting - handle negative values with M/K suffixes
         if (typeof valA === 'string') {
             if (valA.includes('%')) {
                 valA = parseFloat(valA.replace('%', ''));
             } else if (valA.includes('M')) {
-                valA = parseFloat(valA.replace('M', '')) * 1_000_000;
+                const num = parseFloat(valA.replace('M', ''));
+                valA = isNaN(num) ? 0 : num * 1_000_000;
             } else if (valA.includes('K')) {
-                valA = parseFloat(valA.replace('K', '')) * 1_000;
+                const num = parseFloat(valA.replace('K', ''));
+                valA = isNaN(num) ? 0 : num * 1_000;
             } else if (valA === '-') {
                 valA = -999999;
             }
@@ -590,9 +617,11 @@ function renderLeaderboard(query = '') {
             if (valB.includes('%')) {
                 valB = parseFloat(valB.replace('%', ''));
             } else if (valB.includes('M')) {
-                valB = parseFloat(valB.replace('M', '')) * 1_000_000;
+                const num = parseFloat(valB.replace('M', ''));
+                valB = isNaN(num) ? 0 : num * 1_000_000;
             } else if (valB.includes('K')) {
-                valB = parseFloat(valB.replace('K', '')) * 1_000;
+                const num = parseFloat(valB.replace('K', ''));
+                valB = isNaN(num) ? 0 : num * 1_000;
             } else if (valB === '-') {
                 valB = -999999;
             }
@@ -636,15 +665,15 @@ function renderLeaderboard(query = '') {
         holdingsHtml += '</div>';
 
         tr.innerHTML = `
-            <td><span class="ticker-badge">${item.ticker}</span></td>
-            <td><span class="desc-text">${item.description}</span></td>
-            <td><span class="price-text">$${item.price.toFixed(2)}</span></td>
-            <td><span class="dy-text">${item.dy}</span></td>
-            <td><span class="pct-badge ${wkClass}">${wkSign}${item.wk.toFixed(2)}%</span></td>
-            <td><span class="pct-badge ${moClass}">${moSign}${item.mo.toFixed(2)}%</span></td>
-            <td><span class="pct-badge ${yrClass}">${yrSign}${item.yr.toFixed(2)}%</span></td>
-            <td><span class="vol-text">${item.vol}</span></td>
-            <td>${holdingsHtml}</td>
+            <td data-label="Ticker"><span class="ticker-badge">${item.ticker}</span></td>
+            <td data-label="Description"><span class="desc-text">${item.description}</span></td>
+            <td data-label="Price"><span class="price-text">$${item.price.toFixed(2)}</span></td>
+            <td data-label="DY%"><span class="dy-text">${item.dy}</span></td>
+            <td data-label="WK%"><span class="pct-badge ${wkClass}">${wkSign}${item.wk.toFixed(2)}%</span></td>
+            <td data-label="MO%"><span class="pct-badge ${moClass}">${moSign}${item.mo.toFixed(2)}%</span></td>
+            <td data-label="1Y%"><span class="pct-badge ${yrClass}">${yrSign}${item.yr.toFixed(2)}%</span></td>
+            <td data-label="Vol"><span class="vol-text">${item.vol}</span></td>
+            <td data-label="Holdings">${holdingsHtml}</td>
         `;
         tbody.appendChild(tr);
     });
