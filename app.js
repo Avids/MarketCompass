@@ -751,7 +751,7 @@ async function openSectorModal(ticker, description) {
     });
     
     // Render Relative Strength chart immediately (data is in memory)
-    drawModalRelativeStrengthChart(ticker);
+    drawModalRelativeStrengthChart(null, ticker);
     
     try {
         // Fetch detailed historical data in background
@@ -762,10 +762,8 @@ async function openSectorModal(ticker, description) {
         const data = await response.json();
         modalHistoryData = data; // Cache data
         
-        // If user switched away from relative-strength while loading, draw it
-        if (currentModalView !== 'relative-strength') {
-            renderCurrentModalChart();
-        }
+        // Unconditionally render the active chart view to upgrade or render switched tab
+        renderCurrentModalChart();
     } catch (error) {
         console.error('Error loading sector MA spread:', error);
         titleEl.textContent = `${ticker} - Error Loading Historical Data`;
