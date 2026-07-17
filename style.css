@@ -186,16 +186,23 @@ body {
 .dashboard-grid {
     display: grid;
     grid-template-columns: 340px 1fr;
+    grid-template-rows: auto auto auto;
     gap: 1.5rem;
 }
 
 .fear-greed-card {
     grid-column: 1;
-    max-height: 600px;
+    grid-row: 1 / span 2;
+}
+
+.ma-spread-card {
+    grid-column: 1;
+    grid-row: 2;
 }
 
 .relative-strength-card {
     grid-column: 2;
+    grid-row: 1 / span 2;
 }
 
 .leaderboard-card {
@@ -209,14 +216,12 @@ body {
     align-items: center;
     gap: 1rem;
     padding: 1.5rem;
-    overflow-y: auto;
-    max-height: 480px;
 }
 
 .gauge-wrapper {
     position: relative;
-    width: 260px;
-    height: 180px;
+    width: 300px;
+    height: 200px;
 }
 
 .gauge-container {

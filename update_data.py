@@ -342,7 +342,9 @@ def main():
     print("Collecting dashboard data...")
     fg_data = fetch_fear_and_greed()
     market_data = fetch_market_data()
-    ma_spread_data = fetch_ma_spread()
+    # Get sector tickers from leaderboard for MA spread
+    sector_tickers = [item['ticker'] for item in market_data['leaderboard']]
+    ma_spread_data = fetch_ma_spread(tickers=tuple(sector_tickers))
     
     output = {
         "fear_greed": fg_data,
