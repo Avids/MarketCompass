@@ -60,10 +60,16 @@ def fetch_ma_spread(tickers=("QQQ", "SPY"), ma_period=50, lookback_days=252):
 
             close = hist["Close"]
             sma = close.rolling(window=ma_period).mean()
+            sma20 = close.rolling(window=20).mean()
             spread = ((close - sma) / sma * 100).dropna()
 
             # Trim to the requested trailing window (trading days)
             spread = spread.tail(lookback_days)
+            
+            # Align other metrics with the same dates
+            close_trimmed = close.loc[spread.index]
+            sma20_trimmed = sma20.loc[spread.index]
+            sma50_trimmed = sma.loc[spread.index]
 
             mean = float(spread.mean())
             std = float(spread.std())
@@ -75,7 +81,10 @@ def fetch_ma_spread(tickers=("QQQ", "SPY"), ma_period=50, lookback_days=252):
                 "std1_upper": round(mean + std, 3),
                 "std1_lower": round(mean - std, 3),
                 "std2_upper": round(mean + 2 * std, 3),
-                "std2_lower": round(mean - 2 * std, 3)
+                "std2_lower": round(mean - 2 * std, 3),
+                "prices": [round(p, 2) for p in close_trimmed.tolist()],
+                "ma20": [round(m, 2) if m == m else None for m in sma20_trimmed.tolist()],
+                "ma50": [round(m, 2) if m == m else None for m in sma50_trimmed.tolist()]
             }
         except Exception as e:
             print(f"Error computing MA spread for {ticker}: {e}")

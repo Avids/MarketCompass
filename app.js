@@ -7,6 +7,8 @@ let currentMaSpreadTicker = 'QQQ';
 let maSpreadChart = null;
 let modalMaSpreadChart = null;
 let currentActiveTicker = 'QQQ';
+let currentModalView = 'relative-strength';
+let modalHistoryData = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
@@ -727,30 +729,44 @@ async function openSectorModal(ticker, description) {
     const modal = document.getElementById('sector-modal');
     const titleEl = document.getElementById('modal-sector-title');
     currentActiveTicker = ticker;
+    modalHistoryData = null; // Clear old cache
     
     // Update modal title
-    titleEl.textContent = `${ticker} - 50-Day MA Spread (Loading...)`;
+    titleEl.textContent = `${ticker} - Detail Charts`;
     
     // Show modal
     modal.classList.add('active');
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
     
+    // Reset modal selector tabs active class
+    currentModalView = 'relative-strength';
+    const modalTabButtons = document.querySelectorAll('.modal-tab-btn');
+    modalTabButtons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-view') === 'relative-strength') {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Render Relative Strength chart immediately (data is in memory)
+    drawModalRelativeStrengthChart(ticker);
+    
     try {
-        // Fetch detailed historical spread data (per request)
+        // Fetch detailed historical data in background
         const response = await fetch(`history/${ticker}.json?t=${new Date().getTime()}`);
         if (!response.ok) {
-            throw new Error(`Failed to fetch spread history for ${ticker}`);
+            throw new Error(`Failed to fetch history for ${ticker}`);
         }
         const data = await response.json();
+        modalHistoryData = data; // Cache data
         
-        // Restore title
-        titleEl.textContent = `${ticker} - 50-Day MA Spread`;
-        
-        // Render the MA spread chart for this sector
-        drawModalMaSpreadChart(data, ticker);
+        // If user switched away from relative-strength while loading, draw it
+        if (currentModalView !== 'relative-strength') {
+            renderCurrentModalChart();
+        }
     } catch (error) {
         console.error('Error loading sector MA spread:', error);
-        titleEl.textContent = `${ticker} - Error Loading Spread Data`;
+        titleEl.textContent = `${ticker} - Error Loading Historical Data`;
     }
 }
 
@@ -888,7 +904,7 @@ function setupModalListeners() {
         });
     }
     
-    // Copy chart to clipboard button
+    // Copy chart to clipboard button (Dark Theme Export)
     const copyBtn = document.getElementById('modal-copy-btn');
     if (copyBtn) {
         copyBtn.addEventListener('click', async () => {
@@ -896,30 +912,36 @@ function setupModalListeners() {
                 const canvas = document.getElementById('modal-ma-spread-chart');
                 if (!canvas || !modalMaSpreadChart) return;
                 
-                // 1. Temporary export styling (high contrast for white background)
                 const chart = modalMaSpreadChart;
-                const originalXGridColor = chart.options.scales.x.grid.color;
-                const originalYGridColor = chart.options.scales.y.grid.color;
-                const originalXTicksColor = chart.options.scales.x.ticks.color;
-                const originalYTicksColor = chart.options.scales.y.ticks.color;
                 
-                // Get zero line dataset
+                // Save original colors for restoration
+                const originalXGridColor = chart.options.scales.x.grid ? chart.options.scales.x.grid.color : null;
+                const originalYGridColor = chart.options.scales.y.grid ? chart.options.scales.y.grid.color : null;
+                const originalXTicksColor = chart.options.scales.x.ticks ? chart.options.scales.x.ticks.color : null;
+                const originalYTicksColor = chart.options.scales.y.ticks ? chart.options.scales.y.ticks.color : null;
+                const originalLegendColor = chart.options.plugins.legend && chart.options.plugins.legend.labels ? chart.options.plugins.legend.labels.color : null;
+                
+                // Find zero line if exists
                 const zeroLineDataset = chart.data.datasets.find(d => d.label === 'Zero Line');
                 const originalZeroLineColor = zeroLineDataset ? zeroLineDataset.borderColor : null;
                 
-                // Apply white export styles
-                chart.options.scales.x.grid.color = 'rgba(0, 0, 0, 0.05)';
-                chart.options.scales.y.grid.color = 'rgba(0, 0, 0, 0.05)';
-                chart.options.scales.x.ticks.color = '#4b5563'; // gray-600
-                chart.options.scales.y.ticks.color = '#4b5563'; // gray-600
-                if (zeroLineDataset) {
-                    zeroLineDataset.borderColor = 'rgba(0, 0, 0, 0.3)';
+                // Setup export styling (rich dark theme for contrast)
+                if (chart.options.scales.x.grid) chart.options.scales.x.grid.color = 'rgba(255, 255, 255, 0.04)';
+                if (chart.options.scales.y.grid) chart.options.scales.y.grid.color = 'rgba(255, 255, 255, 0.04)';
+                if (chart.options.scales.x.ticks) chart.options.scales.x.ticks.color = '#9ca3af'; // light gray ticks
+                if (chart.options.scales.y.ticks) chart.options.scales.y.ticks.color = '#9ca3af';
+                if (chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+                    chart.options.plugins.legend.labels.color = '#e5e7eb'; // bright white legend
                 }
                 
-                // Update chart layout synchronously without animation
+                if (zeroLineDataset) {
+                    zeroLineDataset.borderColor = 'rgba(255, 255, 255, 0.35)'; // high contrast zero line
+                }
+                
+                // Sync chart draw synchronously
                 chart.update('none');
                 
-                // 2. Setup offscreen canvas
+                // Setup offscreen canvas
                 const tempCanvas = document.createElement('canvas');
                 const tempCtx = tempCanvas.getContext('2d');
                 
@@ -928,35 +950,52 @@ function setupModalListeners() {
                 tempCanvas.width = canvas.width;
                 tempCanvas.height = canvas.height + headerHeight + footerHeight;
                 
-                // Fill with solid white background
-                tempCtx.fillStyle = '#ffffff';
+                // Fill with premium dark theme background color (#0a0f1d)
+                tempCtx.fillStyle = '#0a0f1d';
                 tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                 
-                // 3. Draw Header
+                // Draw Header
                 // Ticker / Title
-                tempCtx.fillStyle = '#111827'; // gray-900
+                tempCtx.fillStyle = '#ffffff'; // White text
                 tempCtx.font = 'bold 16px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                tempCtx.fillText(`${currentActiveTicker} - 50-Day Moving Average Spread`, 20, 32);
+                
+                let titleText = '';
+                let subtitleText = '';
+                
+                if (currentModalView === 'relative-strength') {
+                    titleText = `${currentActiveTicker} - Relative Strength vs SPY`;
+                    const label = currentDuration === '50d' ? '50 Days' : '20 Days';
+                    const sma = currentDuration === '50d' ? '10-day' : '5-day';
+                    subtitleText = `Normalized relative strength compared to SPY over ${label} (plotted with ${sma} SMA)`;
+                } else if (currentModalView === 'ma-spread') {
+                    titleText = `${currentActiveTicker} - 50-Day Moving Average Spread`;
+                    subtitleText = `Price vs 50-DMA spread, last 12 months — bands at 1 and 2 standard deviations`;
+                } else if (currentModalView === 'price-ma') {
+                    titleText = `${currentActiveTicker} - Daily Price & Moving Averages`;
+                    subtitleText = `Daily closing price plotted with 20-day and 50-day simple moving averages`;
+                }
+                
+                tempCtx.fillText(titleText, 20, 32);
                 
                 // Subtitle
-                tempCtx.fillStyle = '#4b5563'; // gray-600
+                tempCtx.fillStyle = '#9ca3af'; // gray-400
                 tempCtx.font = '500 12px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                tempCtx.fillText('Price vs 50-DMA spread, last 12 months — bands at 1 and 2 standard deviations', 20, 54);
+                tempCtx.fillText(subtitleText, 20, 54);
                 
                 // Divider line below header
-                tempCtx.strokeStyle = '#e5e7eb'; // gray-200
+                tempCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
                 tempCtx.lineWidth = 1;
                 tempCtx.beginPath();
                 tempCtx.moveTo(20, 68);
                 tempCtx.lineTo(tempCanvas.width - 20, 68);
                 tempCtx.stroke();
                 
-                // 4. Draw the chart canvas onto the offscreen canvas
+                // Copy the main chart canvas onto the temporary dark-themed canvas
                 tempCtx.drawImage(canvas, 0, headerHeight);
                 
-                // 5. Draw Footer
+                // Draw Footer
                 // Divider line above footer
-                tempCtx.strokeStyle = '#e5e7eb'; // gray-200
+                tempCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
                 tempCtx.beginPath();
                 tempCtx.moveTo(20, tempCanvas.height - 35);
                 tempCtx.lineTo(tempCanvas.width - 20, tempCanvas.height - 35);
@@ -970,21 +1009,24 @@ function setupModalListeners() {
                     hour: '2-digit',
                     minute: '2-digit'
                 });
-                tempCtx.fillStyle = '#9ca3af'; // gray-400
+                tempCtx.fillStyle = '#6b7280'; // gray-500
                 tempCtx.font = '400 10px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
                 tempCtx.fillText(`Exported from MarketCompass on: ${todayStr}`, 20, tempCanvas.height - 15);
                 
-                // 6. Restore original chart visual theme
-                chart.options.scales.x.grid.color = originalXGridColor;
-                chart.options.scales.y.grid.color = originalYGridColor;
-                chart.options.scales.x.ticks.color = originalXTicksColor;
-                chart.options.scales.y.ticks.color = originalYTicksColor;
+                // Restore original theme settings
+                if (chart.options.scales.x.grid) chart.options.scales.x.grid.color = originalXGridColor;
+                if (chart.options.scales.y.grid) chart.options.scales.y.grid.color = originalYGridColor;
+                if (chart.options.scales.x.ticks) chart.options.scales.x.ticks.color = originalXTicksColor;
+                if (chart.options.scales.y.ticks) chart.options.scales.y.ticks.color = originalYTicksColor;
+                if (chart.options.plugins.legend && chart.options.plugins.legend.labels && originalLegendColor) {
+                    chart.options.plugins.legend.labels.color = originalLegendColor;
+                }
                 if (zeroLineDataset && originalZeroLineColor) {
                     zeroLineDataset.borderColor = originalZeroLineColor;
                 }
                 chart.update('none');
                 
-                // 7. Write to clipboard
+                // Export image
                 tempCanvas.toBlob(async (blob) => {
                     if (!blob) {
                         console.error('Failed to create blob from canvas');
@@ -1020,6 +1062,235 @@ function setupModalListeners() {
             const modal = document.getElementById('sector-modal');
             if (modal && modal.classList.contains('active')) {
                 closeSectorModal();
+            }
+        }
+    });
+
+    // Setup Modal Chart Tab Buttons
+    const modalTabButtons = document.querySelectorAll('.modal-tab-btn');
+    modalTabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const view = btn.getAttribute('data-view');
+            if (currentModalView === view) return;
+            
+            currentModalView = view;
+            
+            // Toggle active classes on tab buttons
+            modalTabButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Redraw chart based on view
+            renderCurrentModalChart();
+        });
+    });
+}
+
+function destroyModalChart() {
+    if (modalMaSpreadChart) {
+        modalMaSpreadChart.destroy();
+        modalMaSpreadChart = null;
+    }
+}
+
+function renderCurrentModalChart() {
+    if (currentModalView === 'relative-strength') {
+        drawModalRelativeStrengthChart(currentActiveTicker);
+    } else if (currentModalView === 'ma-spread') {
+        if (modalHistoryData) {
+            drawModalMaSpreadChart(modalHistoryData, currentActiveTicker);
+        }
+    } else if (currentModalView === 'price-ma') {
+        if (modalHistoryData) {
+            drawModalPriceMaChart(modalHistoryData, currentActiveTicker);
+        }
+    }
+}
+
+function drawModalRelativeStrengthChart(ticker) {
+    destroyModalChart();
+    
+    const ctx = document.getElementById('modal-ma-spread-chart').getContext('2d');
+    const relStrengthData = fullData.relative_strength[ticker];
+    if (!relStrengthData || !relStrengthData[currentDuration]) return;
+    
+    const item = relStrengthData[currentDuration];
+    const values = item.values;
+    
+    // Calculate SMA
+    const smaValues = [];
+    const smaPeriod = currentDuration === '50d' ? 10 : 5;
+    for (let i = 0; i < values.length; i++) {
+        if (i < smaPeriod - 1) {
+            smaValues.push(values[i]);
+        } else {
+            let sum = 0;
+            for (let j = 0; j < smaPeriod; j++) {
+                sum += values[i - j];
+            }
+            smaValues.push(Number((sum / smaPeriod).toFixed(2)));
+        }
+    }
+    
+    const currentVal = values[values.length - 1];
+    const currentSma = smaValues[smaValues.length - 1];
+    const isBullish = currentVal >= currentSma;
+    const priceColor = isBullish ? '#10b981' : '#ef4444';
+    
+    modalMaSpreadChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: item.dates,
+            datasets: [
+                {
+                    label: currentDuration === '50d' ? '10-Day SMA' : '5-Day SMA',
+                    data: smaValues,
+                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                    borderWidth: 1.5,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.2
+                },
+                {
+                    label: 'Relative Strength',
+                    data: values,
+                    borderColor: priceColor,
+                    borderWidth: 2.2,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: priceColor,
+                    fill: {
+                        target: 0,
+                        above: 'rgba(16, 185, 129, 0.08)',
+                        below: 'rgba(239, 68, 68, 0.08)'
+                    },
+                    tension: 0.2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: '#9ca3af',
+                        font: { family: 'Plus Jakarta Sans', size: 11 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#1f2937',
+                    titleColor: '#9ca3af',
+                    bodyColor: '#f3f4f6',
+                    borderColor: 'rgba(255,255,255,0.08)',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#6b7280', maxTicksLimit: 12 }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#6b7280' }
+                }
+            }
+        }
+    });
+}
+
+function drawModalPriceMaChart(data, ticker) {
+    destroyModalChart();
+    
+    const ctx = document.getElementById('modal-ma-spread-chart').getContext('2d');
+    if (!data.prices) return;
+    
+    modalMaSpreadChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.dates,
+            datasets: [
+                {
+                    label: 'Price',
+                    data: data.prices,
+                    borderColor: '#06b6d4', // Cyan
+                    borderWidth: 2.2,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#06b6d4',
+                    fill: false,
+                    tension: 0.15
+                },
+                {
+                    label: '20-Day MA',
+                    data: data.ma20,
+                    borderColor: '#f59e0b', // Amber/Yellow-orange
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false,
+                    tension: 0.15
+                },
+                {
+                    label: '50-Day MA',
+                    data: data.ma50,
+                    borderColor: '#ec4899', // Pink
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false,
+                    tension: 0.15
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: '#9ca3af',
+                        font: { family: 'Plus Jakarta Sans', size: 11 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#1f2937',
+                    titleColor: '#9ca3af',
+                    bodyColor: '#f3f4f6',
+                    borderColor: 'rgba(255,255,255,0.08)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            const val = context.parsed.y;
+                            if (val === null || val === undefined) return `${context.dataset.label}: N/A`;
+                            return `${context.dataset.label}: $${val.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#6b7280', maxTicksLimit: 12 }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: {
+                        color: '#6b7280',
+                        callback: (v) => `$${v}`
+                    }
+                }
             }
         }
     });
