@@ -10174,24 +10174,58 @@
     {
       "ticker": "CWI",
       "description": "All World ex US",
-      "price": 0.0,
-      "dy": "-",
-      "wk": 0.0,
-      "mo": 0.0,
-      "yr": 0.0,
-      "vol": "-",
-      "holdings": []
+      "price": 39.9,
+      "dy": "270.0%",
+      "wk": -1.6,
+      "mo": -2.3,
+      "yr": 25.53,
+      "vol": "338.5K",
+      "holdings": [
+        {
+          "ticker": "TSM",
+          "pct": 5.3
+        },
+        {
+          "ticker": "SMSN",
+          "pct": 2.9
+        },
+        {
+          "ticker": "000660.KS",
+          "pct": 2.5
+        },
+        {
+          "ticker": "ASML.AS",
+          "pct": 2.1
+        },
+        {
+          "ticker": "HSBA.L",
+          "pct": 0.9
+        }
+      ]
     },
     {
       "ticker": "DBC",
       "description": "Commodities",
-      "price": 0.0,
-      "dy": "-",
-      "wk": 0.0,
-      "mo": 0.0,
-      "yr": 0.0,
-      "vol": "-",
-      "holdings": []
+      "price": 28.46,
+      "dy": "280.0%",
+      "wk": 3.42,
+      "mo": 2.01,
+      "yr": 30.8,
+      "vol": "472.7K",
+      "holdings": [
+        {
+          "ticker": "AGPXX",
+          "pct": 37.0
+        },
+        {
+          "ticker": "BRNZ26",
+          "pct": 7.6
+        },
+        {
+          "ticker": "TBLL",
+          "pct": 6.6
+        }
+      ]
     },
     {
       "ticker": "DBA",
@@ -10309,25 +10343,25 @@
     {
       "ticker": "BND",
       "description": "Total Bond Market",
-      "price": 72.81,
-      "dy": "395.0%",
-      "wk": 0.05,
-      "mo": -0.49,
-      "yr": 4.13,
-      "vol": "6.1M",
+      "price": 0.0,
+      "dy": "-",
+      "wk": 0.0,
+      "mo": 0.0,
+      "yr": 0.0,
+      "vol": "-",
       "holdings": []
     },
     {
       "ticker": "TIP",
       "description": "T.I.P.S.",
-      "price": 107.97,
-      "dy": "377.0%",
-      "wk": -0.15,
-      "mo": -0.67,
-      "yr": 2.91,
-      "vol": "812.5K",
+      "price": 0.0,
+      "dy": "-",
+      "wk": 0.0,
+      "mo": 0.0,
+      "yr": 0.0,
+      "vol": "-",
       "holdings": []
     }
   ],
-  "last_updated": "2026-07-16T22:39:09.631992"
+  "last_updated": "2026-07-17T02:45:25.568565"
 }
