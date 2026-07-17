@@ -1,4 +1,8 @@
 let currentDuration = '20d'; // Default active duration ('20d' or '50d')
+let fullData = null;
+let charts = {};
+let currentSortColumn = 'wk';
+let currentSortOrder = 'desc';
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
