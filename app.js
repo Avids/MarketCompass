@@ -415,7 +415,7 @@ function renderSingleChartGroup(group, relStrengthData, durationLabel) {
     groupDiv.innerHTML = `<h3 class="charts-group-subheader">${group.title}</h3>`;
 
     const gridDiv = document.createElement('div');
-    gridDiv.className = 'charts-grid-container';
+    gridDiv.className = 'charts-grid';
     groupDiv.appendChild(gridDiv);
 
     validTickers.forEach(ticker => {
