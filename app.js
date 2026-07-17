@@ -834,6 +834,32 @@ function drawModalMaSpreadChart(item, ticker) {
     const vMin = Math.min(...values, item.std2_lower);
     const vMax = Math.max(...values, item.std2_upper);
     const pad = (vMax - vMin) * 0.08;
+
+    // Detect extreme OB/OS levels for highlighting
+    const pointRadii = [];
+    const pointBgColors = [];
+    const pointBorderColors = [];
+    const pointHoverRadii = [];
+    
+    for (let i = 0; i < values.length; i++) {
+        const val = values[i];
+        if (val >= item.std2_upper) {
+            pointRadii.push(5);
+            pointHoverRadii.push(7);
+            pointBgColors.push('#ef4444'); // Red
+            pointBorderColors.push('#ffffff');
+        } else if (val <= item.std2_lower) {
+            pointRadii.push(5);
+            pointHoverRadii.push(7);
+            pointBgColors.push('#10b981'); // Green
+            pointBorderColors.push('#ffffff');
+        } else {
+            pointRadii.push(0);
+            pointHoverRadii.push(5);
+            pointBgColors.push('transparent');
+            pointBorderColors.push('transparent');
+        }
+    }
     
     modalMaSpreadChart = new Chart(ctx, {
         type: 'line',
@@ -844,9 +870,11 @@ function drawModalMaSpreadChart(item, ticker) {
                 data: values,
                 borderColor: '#06b6d4',
                 borderWidth: 2,
-                pointRadius: 0,
-                pointHoverRadius: 6,
-                pointBackgroundColor: '#06b6d4',
+                pointRadius: pointRadii,
+                pointHoverRadius: pointHoverRadii,
+                pointBackgroundColor: pointBgColors,
+                pointBorderColor: pointBorderColors,
+                pointBorderWidth: 1,
                 fill: false,
                 tension: 0.15
             }]
@@ -945,7 +973,7 @@ function setupModalListeners() {
                 const tempCanvas = document.createElement('canvas');
                 const tempCtx = tempCanvas.getContext('2d');
                 
-                const headerHeight = 75;
+                const headerHeight = 95;
                 const footerHeight = 40;
                 tempCanvas.width = canvas.width;
                 tempCanvas.height = canvas.height + headerHeight + footerHeight;
@@ -961,33 +989,44 @@ function setupModalListeners() {
                 
                 let titleText = '';
                 let subtitleText = '';
+                let legendText = '';
+                
+                const isRSFullAligned = !!(modalHistoryData && modalHistoryData.relative_strength && modalHistoryData.relative_strength.length > 0);
                 
                 if (currentModalView === 'relative-strength') {
                     titleText = `${currentActiveTicker} - Relative Strength vs SPY`;
-                    const label = currentDuration === '50d' ? '50 Days' : '20 Days';
-                    const sma = currentDuration === '50d' ? '10-day' : '5-day';
+                    const label = isRSFullAligned ? '6 Months' : (currentDuration === '50d' ? '50 Days' : '20 Days');
+                    const sma = isRSFullAligned ? '10-day' : (currentDuration === '50d' ? '10-day' : '5-day');
                     subtitleText = `Normalized relative strength compared to SPY over ${label} (plotted with ${sma} SMA)`;
+                    legendText = 'Legend: 🟢 Outperforming SPY | 🔴 Underperforming SPY | - - 10-Day SMA';
                 } else if (currentModalView === 'ma-spread') {
                     titleText = `${currentActiveTicker} - 50-Day Moving Average Spread`;
-                    subtitleText = `Price vs 50-DMA spread, last 12 months — bands at 1 and 2 standard deviations`;
+                    subtitleText = `Price vs 50-DMA spread, last 6 months — bands at 1 and 2 standard deviations`;
+                    legendText = 'Legend: 🔴 Extreme Overbought (>= +2 SD) | 🟢 Extreme Oversold (<= -2 SD)';
                 } else if (currentModalView === 'price-ma') {
                     titleText = `${currentActiveTicker} - Daily Price & Moving Averages`;
                     subtitleText = `Daily closing price plotted with 20-day and 50-day simple moving averages`;
+                    legendText = 'Legend: ▲ Golden Cross (20 MA crosses above 50 MA) | ◆ Death Cross (20 MA crosses below 50 MA)';
                 }
                 
-                tempCtx.fillText(titleText, 20, 32);
+                tempCtx.fillText(titleText, 20, 28);
                 
                 // Subtitle
                 tempCtx.fillStyle = '#9ca3af'; // gray-400
                 tempCtx.font = '500 12px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                tempCtx.fillText(subtitleText, 20, 54);
+                tempCtx.fillText(subtitleText, 20, 48);
+                
+                // Legend
+                tempCtx.fillStyle = '#9ca3af'; // gray-400
+                tempCtx.font = 'bold 11px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                tempCtx.fillText(legendText, 20, 68);
                 
                 // Divider line below header
                 tempCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
                 tempCtx.lineWidth = 1;
                 tempCtx.beginPath();
-                tempCtx.moveTo(20, 68);
-                tempCtx.lineTo(tempCanvas.width - 20, 68);
+                tempCtx.moveTo(20, 82);
+                tempCtx.lineTo(tempCanvas.width - 20, 82);
                 tempCtx.stroke();
                 
                 // Copy the main chart canvas onto the temporary dark-themed canvas
@@ -1093,32 +1132,82 @@ function destroyModalChart() {
 }
 
 function renderCurrentModalChart() {
+    const legendEl = document.getElementById('modal-chart-legend');
+    if (!legendEl) return;
+
     if (currentModalView === 'relative-strength') {
-        drawModalRelativeStrengthChart(currentActiveTicker);
+        legendEl.innerHTML = `
+            <div class="modal-legend-item">
+                <span class="modal-legend-marker" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981;"></span>
+                <span>Outperforming SPY</span>
+            </div>
+            <div class="modal-legend-item">
+                <span class="modal-legend-marker" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444;"></span>
+                <span>Underperforming SPY</span>
+            </div>
+            <div class="modal-legend-item">
+                <span class="modal-legend-marker" style="background: transparent; border: 1px dashed rgba(255, 255, 255, 0.4); border-radius: 0; width: 10px; height: 0;"></span>
+                <span>10-Day SMA</span>
+            </div>
+        `;
+        drawModalRelativeStrengthChart(modalHistoryData, currentActiveTicker);
     } else if (currentModalView === 'ma-spread') {
+        legendEl.innerHTML = `
+            <div class="modal-legend-item">
+                <span class="modal-legend-marker" style="background: #ef4444; box-shadow: 0 0 6px #ef4444;"></span>
+                <span>🔴 Extreme Overbought (>= +2 SD)</span>
+            </div>
+            <div class="modal-legend-item">
+                <span class="modal-legend-marker" style="background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
+                <span>🟢 Extreme Oversold (<= -2 SD)</span>
+            </div>
+        `;
         if (modalHistoryData) {
             drawModalMaSpreadChart(modalHistoryData, currentActiveTicker);
         }
     } else if (currentModalView === 'price-ma') {
+        legendEl.innerHTML = `
+            <div class="modal-legend-item">
+                <span class="modal-legend-marker triangle"></span>
+                <span>▲ Golden Cross (20 MA crosses above 50 MA)</span>
+            </div>
+            <div class="modal-legend-item">
+                <span class="modal-legend-marker diamond"></span>
+                <span>◆ Death Cross (20 MA crosses below 50 MA)</span>
+            </div>
+        `;
         if (modalHistoryData) {
             drawModalPriceMaChart(modalHistoryData, currentActiveTicker);
         }
     }
 }
 
-function drawModalRelativeStrengthChart(ticker) {
+function drawModalRelativeStrengthChart(data, ticker) {
     destroyModalChart();
     
     const ctx = document.getElementById('modal-ma-spread-chart').getContext('2d');
-    const relStrengthData = fullData.relative_strength[ticker];
-    if (!relStrengthData || !relStrengthData[currentDuration]) return;
     
-    const item = relStrengthData[currentDuration];
-    const values = item.values;
+    let dates = [];
+    let values = [];
+    
+    const isFullAligned = !!(data && data.relative_strength && data.relative_strength.length > 0);
+    
+    if (isFullAligned) {
+        dates = data.dates;
+        values = data.relative_strength;
+    } else {
+        // Fallback to preloaded data
+        const relStrengthData = fullData.relative_strength[ticker];
+        if (!relStrengthData || !relStrengthData[currentDuration]) return;
+        const item = relStrengthData[currentDuration];
+        dates = item.dates;
+        values = item.values;
+    }
     
     // Calculate SMA
     const smaValues = [];
-    const smaPeriod = currentDuration === '50d' ? 10 : 5;
+    const smaPeriod = isFullAligned ? 10 : (currentDuration === '50d' ? 10 : 5);
+    
     for (let i = 0; i < values.length; i++) {
         if (i < smaPeriod - 1) {
             smaValues.push(values[i]);
@@ -1139,10 +1228,10 @@ function drawModalRelativeStrengthChart(ticker) {
     modalMaSpreadChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: item.dates,
+            labels: dates,
             datasets: [
                 {
-                    label: currentDuration === '50d' ? '10-Day SMA' : '5-Day SMA',
+                    label: isFullAligned ? '10-Day SMA' : (currentDuration === '50d' ? '10-Day SMA' : '5-Day SMA'),
                     data: smaValues,
                     borderColor: 'rgba(255, 255, 255, 0.3)',
                     borderWidth: 1.5,
@@ -1211,6 +1300,52 @@ function drawModalPriceMaChart(data, ticker) {
     const ctx = document.getElementById('modal-ma-spread-chart').getContext('2d');
     if (!data.prices) return;
     
+    // Detect Golden / Death Crosses
+    const pointRadii = [];
+    const pointBgColors = [];
+    const pointBorderColors = [];
+    const pointHoverRadii = [];
+    const pointStyles = [];
+    
+    const prices = data.prices;
+    const ma20 = data.ma20;
+    const ma50 = data.ma50;
+    
+    for (let i = 0; i < prices.length; i++) {
+        if (i > 0 && ma20[i] !== null && ma50[i] !== null && ma20[i-1] !== null && ma50[i-1] !== null) {
+            const prevDiff = ma20[i-1] - ma50[i-1];
+            const currDiff = ma20[i] - ma50[i];
+            
+            if (prevDiff < 0 && currDiff >= 0) {
+                // Golden Cross (Bullish Crossover)
+                pointRadii.push(7);
+                pointHoverRadii.push(9);
+                pointBgColors.push('#10b981'); // Emerald green
+                pointBorderColors.push('#ffffff');
+                pointStyles.push('triangle'); // Triangle pointing up
+            } else if (prevDiff > 0 && currDiff <= 0) {
+                // Death Cross (Bearish Crossover)
+                pointRadii.push(7);
+                pointHoverRadii.push(9);
+                pointBgColors.push('#ef4444'); // Red
+                pointBorderColors.push('#ffffff');
+                pointStyles.push('rectRot'); // Diamond
+            } else {
+                pointRadii.push(0);
+                pointHoverRadii.push(5);
+                pointBgColors.push('transparent');
+                pointBorderColors.push('transparent');
+                pointStyles.push('circle');
+            }
+        } else {
+            pointRadii.push(0);
+            pointHoverRadii.push(5);
+            pointBgColors.push('transparent');
+            pointBorderColors.push('transparent');
+            pointStyles.push('circle');
+        }
+    }
+    
     modalMaSpreadChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -1221,9 +1356,12 @@ function drawModalPriceMaChart(data, ticker) {
                     data: data.prices,
                     borderColor: '#06b6d4', // Cyan
                     borderWidth: 2.2,
-                    pointRadius: 0,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#06b6d4',
+                    pointRadius: pointRadii,
+                    pointHoverRadius: pointHoverRadii,
+                    pointBackgroundColor: pointBgColors,
+                    pointBorderColor: pointBorderColors,
+                    pointBorderWidth: 1.5,
+                    pointStyle: pointStyles,
                     fill: false,
                     tension: 0.15
                 },

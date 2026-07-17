@@ -51,6 +51,15 @@ def fetch_ma_spread(tickers=("QQQ", "SPY"), ma_period=50, lookback_days=252):
     # Need extra history before the window starts so the MA is valid on day 1
     period_days = lookback_days + ma_period + 20
 
+    # Fetch SPY historical prices for relative strength calculation
+    spy_close = None
+    try:
+        spy_hist = yf.Ticker("SPY").history(period=f"{period_days}d")
+        if not spy_hist.empty:
+            spy_close = spy_hist["Close"]
+    except Exception as e:
+        print(f"Error fetching SPY close for MA spread relative strength: {e}")
+
     for ticker in tickers:
         try:
             hist = yf.Ticker(ticker).history(period=f"{period_days}d")
@@ -74,6 +83,17 @@ def fetch_ma_spread(tickers=("QQQ", "SPY"), ma_period=50, lookback_days=252):
             mean = float(spread.mean())
             std = float(spread.std())
 
+            # Calculate relative strength normalized to start of trailing window
+            rel_strength = []
+            if spy_close is not None:
+                ratio = close / spy_close
+                ratio = ratio.dropna()
+                common_idx = spread.index.intersection(ratio.index)
+                if not common_idx.empty:
+                    ratio_trimmed = ratio.loc[common_idx]
+                    first_val = ratio_trimmed.iloc[0]
+                    rel_strength = ((ratio_trimmed / first_val) * 100).round(2).tolist()
+
             result[ticker] = {
                 "dates": [d.strftime("%Y-%m-%d") for d in spread.index],
                 "values": [round(v, 3) for v in spread.tolist()],
@@ -84,7 +104,8 @@ def fetch_ma_spread(tickers=("QQQ", "SPY"), ma_period=50, lookback_days=252):
                 "std2_lower": round(mean - 2 * std, 3),
                 "prices": [round(p, 2) for p in close_trimmed.tolist()],
                 "ma20": [round(m, 2) if m == m else None for m in sma20_trimmed.tolist()],
-                "ma50": [round(m, 2) if m == m else None for m in sma50_trimmed.tolist()]
+                "ma50": [round(m, 2) if m == m else None for m in sma50_trimmed.tolist()],
+                "relative_strength": rel_strength
             }
         except Exception as e:
             print(f"Error computing MA spread for {ticker}: {e}")
@@ -397,7 +418,7 @@ def main():
     # Generate spread data for all tickers and save as JSON files
     for ticker in all_tickers:
         print(f"Calculating MA spread for {ticker}...")
-        ticker_spread = fetch_ma_spread(tickers=(ticker,))
+        ticker_spread = fetch_ma_spread(tickers=(ticker,), lookback_days=126)
         if ticker in ticker_spread:
             with open(f"history/{ticker}.json", "w") as hf:
                 json.dump(ticker_spread[ticker], hf, indent=2)
