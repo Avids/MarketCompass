@@ -182,31 +182,28 @@ body {
     display: block;
 }
 
-/* Grid Layout */
+/* Grid & Flex Layout */
 .dashboard-main {
     margin-top: 1rem;
 }
 
 .overview-grid {
-    display: grid;
-    grid-template-columns: 340px 1fr;
-    grid-template-rows: auto auto;
+    display: flex;
     gap: 1.5rem;
+    align-items: flex-start;
 }
 
-.fear-greed-card {
-    grid-column: 1;
-    grid-row: 1;
+.overview-left-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 340px;
+    flex-shrink: 0;
 }
 
-.ma-spread-card {
-    grid-column: 1;
-    grid-row: 2;
-}
-
-.relative-strength-card {
-    grid-column: 2;
-    grid-row: 1 / span 2;
+.overview-right-col {
+    flex: 1;
+    min-width: 0;
 }
 
 /* Fear and Greed Index Widget */
@@ -668,10 +665,10 @@ body {
 /* Responsive adjustments */
 @media (max-width: 1200px) {
     .overview-grid {
-        grid-template-columns: 1fr;
+        flex-direction: column;
     }
-    .fear-greed-card, .relative-strength-card {
-        grid-column: 1 / -1;
+    .overview-left-col {
+        width: 100%;
     }
 }
 
