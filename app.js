@@ -705,7 +705,7 @@ function openSectorModal(ticker, description) {
     titleEl.textContent = `${ticker} - 50-Day MA Spread`;
     
     // Show modal
-    modal.style.display = 'flex';
+    modal.classList.add('active');
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
     
     // Render the MA spread chart for this sector
@@ -716,7 +716,7 @@ function openSectorModal(ticker, description) {
 
 function closeSectorModal() {
     const modal = document.getElementById('sector-modal');
-    modal.style.display = 'none';
+    modal.classList.remove('active');
     document.body.style.overflow = ''; // Restore scrolling
     
     // Destroy modal chart to free memory
@@ -838,6 +838,16 @@ function setupModalListeners() {
         closeBtn.addEventListener('click', closeSectorModal);
     }
     
+    // Close modal when clicking outside content
+    const modalOverlay = document.getElementById('sector-modal');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                closeSectorModal();
+            }
+        });
+    }
+    
     // Copy chart to clipboard button
     const copyBtn = document.getElementById('modal-copy-btn');
     if (copyBtn) {
@@ -877,25 +887,15 @@ function setupModalListeners() {
         });
     }
     
-    // Close modal when clicking outside content
-    const modalOverlay = document.getElementById('sector-modal');
-    if (modalOverlay) {
-        modalOverlay.addEventListener('click', (e) => {
-            if (e.target === modalOverlay) {
-                closeSectorModal();
-            }
-        });
-    }
-    
     // Close modal on Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             const modal = document.getElementById('sector-modal');
-            if (modal && modal.style.display === 'flex') {
+            if (modal && modal.classList.contains('active')) {
                 closeSectorModal();
             }
         }
     });
-};
+}
 
 // Modal setup is now called from DOMContentLoaded in the main script
