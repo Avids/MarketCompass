@@ -998,7 +998,7 @@ function setupModalListeners() {
                     const label = isRSFullAligned ? '6 Months' : (currentDuration === '50d' ? '50 Days' : '20 Days');
                     const sma = isRSFullAligned ? '10-day' : (currentDuration === '50d' ? '10-day' : '5-day');
                     subtitleText = `Normalized relative strength compared to SPY over ${label} (plotted with ${sma} SMA)`;
-                    legendText = 'Legend: 🟢 Outperforming SPY | 🔴 Underperforming SPY | - - 10-Day SMA';
+                    legendText = 'Legend: 🟢 Bullish Crossover (RS > SMA) | 🔴 Bearish Crossover (RS < SMA) | - - SMA';
                 } else if (currentModalView === 'ma-spread') {
                     titleText = `${currentActiveDescription} - 50-Day Moving Average Spread`;
                     subtitleText = `Price vs 50-DMA spread, last 6 months — bands at 1 and 2 standard deviations`;
@@ -1138,12 +1138,12 @@ function renderCurrentModalChart() {
     if (currentModalView === 'relative-strength') {
         legendEl.innerHTML = `
             <div class="modal-legend-item">
-                <span class="modal-legend-marker" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981;"></span>
-                <span>Outperforming SPY</span>
+                <span class="modal-legend-marker" style="background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
+                <span>🟢 Bullish Crossover (RS crosses above SMA)</span>
             </div>
             <div class="modal-legend-item">
-                <span class="modal-legend-marker" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444;"></span>
-                <span>Underperforming SPY</span>
+                <span class="modal-legend-marker" style="background: #ef4444; box-shadow: 0 0 6px #ef4444;"></span>
+                <span>🔴 Bearish Crossover (RS crosses below SMA)</span>
             </div>
             <div class="modal-legend-item">
                 <span class="modal-legend-marker" style="background: transparent; border: 1px dashed rgba(255, 255, 255, 0.4); border-radius: 0; width: 10px; height: 0;"></span>
@@ -1224,6 +1224,43 @@ function drawModalRelativeStrengthChart(data, ticker) {
     const currentSma = smaValues[smaValues.length - 1];
     const isBullish = currentVal >= currentSma;
     const priceColor = isBullish ? '#10b981' : '#ef4444';
+
+    // Detect Bullish / Bearish crossovers of Relative Strength vs SMA
+    const pointRadii = [];
+    const pointBgColors = [];
+    const pointBorderColors = [];
+    const pointHoverRadii = [];
+    
+    for (let i = 0; i < values.length; i++) {
+        if (i > 0 && values[i] !== null && smaValues[i] !== null && values[i-1] !== null && smaValues[i-1] !== null) {
+            const prevDiff = values[i-1] - smaValues[i-1];
+            const currDiff = values[i] - smaValues[i];
+            
+            if (prevDiff < 0 && currDiff >= 0) {
+                // Bullish Crossover
+                pointRadii.push(5);
+                pointHoverRadii.push(7);
+                pointBgColors.push('#10b981'); // Green
+                pointBorderColors.push('#ffffff');
+            } else if (prevDiff > 0 && currDiff <= 0) {
+                // Bearish Crossover
+                pointRadii.push(5);
+                pointHoverRadii.push(7);
+                pointBgColors.push('#ef4444'); // Red
+                pointBorderColors.push('#ffffff');
+            } else {
+                pointRadii.push(0);
+                pointHoverRadii.push(5);
+                pointBgColors.push('transparent');
+                pointBorderColors.push('transparent');
+            }
+        } else {
+            pointRadii.push(0);
+            pointHoverRadii.push(5);
+            pointBgColors.push('transparent');
+            pointBorderColors.push('transparent');
+        }
+    }
     
     modalMaSpreadChart = new Chart(ctx, {
         type: 'line',
@@ -1245,9 +1282,11 @@ function drawModalRelativeStrengthChart(data, ticker) {
                     data: values,
                     borderColor: priceColor,
                     borderWidth: 2.2,
-                    pointRadius: 0,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: priceColor,
+                    pointRadius: pointRadii,
+                    pointHoverRadius: pointHoverRadii,
+                    pointBackgroundColor: pointBgColors,
+                    pointBorderColor: pointBorderColors,
+                    pointBorderWidth: 1,
                     fill: {
                         target: 0,
                         above: 'rgba(16, 185, 129, 0.08)',
