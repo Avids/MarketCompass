@@ -835,6 +835,45 @@ const setupModalListeners = () => {
         closeBtn.addEventListener('click', closeSectorModal);
     }
     
+    // Copy chart to clipboard button
+    const copyBtn = document.getElementById('modal-copy-btn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+            try {
+                const canvas = document.getElementById('modal-ma-spread-chart');
+                if (!canvas) return;
+                
+                // Convert canvas to blob
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        console.error('Failed to create blob from canvas');
+                        return;
+                    }
+                    
+                    // Write to clipboard
+                    await navigator.clipboard.write([
+                        new ClipboardItem({
+                            'image/png': blob
+                        })
+                    ]);
+                    
+                    // Show success feedback
+                    const originalContent = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+                    copyBtn.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalContent;
+                        copyBtn.style.borderColor = 'rgba(6, 182, 212, 0.3)';
+                    }, 2000);
+                }, 'image/png');
+            } catch (err) {
+                console.error('Failed to copy chart:', err);
+                alert('Failed to copy chart. Please try taking a screenshot instead.');
+            }
+        });
+    }
+    
     // Close modal when clicking outside content
     const modalOverlay = document.getElementById('sector-modal');
     if (modalOverlay) {
