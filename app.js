@@ -7,6 +7,7 @@ let currentMaSpreadTicker = 'QQQ';
 let maSpreadChart = null;
 let modalMaSpreadChart = null;
 let currentActiveTicker = 'QQQ';
+let currentActiveDescription = 'QQQ';
 let currentModalView = 'relative-strength';
 let modalHistoryData = null;
 
@@ -729,10 +730,11 @@ async function openSectorModal(ticker, description) {
     const modal = document.getElementById('sector-modal');
     const titleEl = document.getElementById('modal-sector-title');
     currentActiveTicker = ticker;
+    currentActiveDescription = description || ticker;
     modalHistoryData = null; // Clear old cache
     
     // Update modal title
-    titleEl.textContent = `${ticker} - Detail Charts`;
+    titleEl.textContent = `${currentActiveDescription} - Detail Charts`;
     
     // Show modal
     modal.classList.add('active');
@@ -994,17 +996,17 @@ function setupModalListeners() {
                 const isRSFullAligned = !!(modalHistoryData && modalHistoryData.relative_strength && modalHistoryData.relative_strength.length > 0);
                 
                 if (currentModalView === 'relative-strength') {
-                    titleText = `${currentActiveTicker} - Relative Strength vs SPY`;
+                    titleText = `${currentActiveDescription} - Relative Strength vs SPY`;
                     const label = isRSFullAligned ? '6 Months' : (currentDuration === '50d' ? '50 Days' : '20 Days');
                     const sma = isRSFullAligned ? '10-day' : (currentDuration === '50d' ? '10-day' : '5-day');
                     subtitleText = `Normalized relative strength compared to SPY over ${label} (plotted with ${sma} SMA)`;
                     legendText = 'Legend: 🟢 Outperforming SPY | 🔴 Underperforming SPY | - - 10-Day SMA';
                 } else if (currentModalView === 'ma-spread') {
-                    titleText = `${currentActiveTicker} - 50-Day Moving Average Spread`;
+                    titleText = `${currentActiveDescription} - 50-Day Moving Average Spread`;
                     subtitleText = `Price vs 50-DMA spread, last 6 months — bands at 1 and 2 standard deviations`;
                     legendText = 'Legend: 🔴 Extreme Overbought (>= +2 SD) | 🟢 Extreme Oversold (<= -2 SD)';
                 } else if (currentModalView === 'price-ma') {
-                    titleText = `${currentActiveTicker} - Daily Price & Moving Averages`;
+                    titleText = `${currentActiveDescription} - Daily Price & Moving Averages`;
                     subtitleText = `Daily closing price plotted with 20-day and 50-day simple moving averages`;
                     legendText = 'Legend: ▲ Golden Cross (20 MA crosses above 50 MA) | ◆ Death Cross (20 MA crosses below 50 MA)';
                 }
