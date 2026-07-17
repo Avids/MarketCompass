@@ -1,9 +1,36 @@
 import os
+import sys
 import json
+import time
 import urllib.request
 import pandas as pd
 import yfinance as yf
 from datetime import datetime
+
+CACHE_MAX_AGE_HOURS = 24  # Max hours before a cached history file is considered stale
+
+# ─── Helpers ──────────────────────────────────────────────────────────────────
+
+def is_cache_fresh(filepath, max_age_hours=CACHE_MAX_AGE_HOURS):
+    """Return True if the file exists and was modified within max_age_hours."""
+    if not os.path.exists(filepath):
+        return False
+    age_seconds = time.time() - os.path.getmtime(filepath)
+    return age_seconds < (max_age_hours * 3600)
+
+def load_custom_tickers():
+    """Load the list of custom tickers from custom_tickers.json."""
+    if not os.path.exists("custom_tickers.json"):
+        return {}
+    with open("custom_tickers.json", "r") as f:
+        return json.load(f)
+
+def save_custom_tickers(tickers_dict):
+    """Persist the custom tickers dict to custom_tickers.json."""
+    with open("custom_tickers.json", "w") as f:
+        json.dump(tickers_dict, f, indent=2)
+
+# ─── Data Fetching ─────────────────────────────────────────────────────────────
 
 def fetch_fear_and_greed():
     url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata/"
@@ -30,7 +57,6 @@ def fetch_fear_and_greed():
             }
     except Exception as e:
         print(f"Error fetching Fear & Greed: {e}")
-        # Return fallback mock/sensible values in case the endpoint fails
         return {
             "score": 42,
             "rating": "FEAR",
@@ -41,11 +67,12 @@ def fetch_fear_and_greed():
             "one_year_ago": 60
         }
 
-def fetch_ma_spread(tickers=("QQQ", "SPY"), ma_period=50, lookback_days=252):
+def fetch_ma_spread(tickers=("QQQ", "SPY"), ma_period=50, lookback_days=252, force=False):
     """
     Computes the % spread of price vs its N-day moving average, over the
     trailing `lookback_days`, plus 1/2 std-dev bands of that spread series.
     Mirrors the classic 'Overbought/Oversold vs 50-DMA' breadth chart.
+    If `force=False` and a fresh cached file exists, load from cache instead.
     """
     result = {}
     # Need extra history before the window starts so the MA is valid on day 1
@@ -61,6 +88,16 @@ def fetch_ma_spread(tickers=("QQQ", "SPY"), ma_period=50, lookback_days=252):
         print(f"Error fetching SPY close for MA spread relative strength: {e}")
 
     for ticker in tickers:
+        cache_path = f"history/{ticker}.json"
+        if not force and is_cache_fresh(cache_path):
+            print(f"  [cache] {ticker} — loading from {cache_path}")
+            try:
+                with open(cache_path, "r") as cf:
+                    result[ticker] = json.load(cf)
+                continue
+            except Exception as e:
+                print(f"  [cache miss] Error reading cache for {ticker}: {e}")
+
         try:
             hist = yf.Ticker(ticker).history(period=f"{period_days}d")
             if hist.empty or len(hist) < ma_period + 5:
@@ -112,7 +149,7 @@ def fetch_ma_spread(tickers=("QQQ", "SPY"), ma_period=50, lookback_days=252):
 
     return result
 
-def fetch_market_data():
+def fetch_market_data(force=False):
     sectors = {
         # Sectors & Thematic (from Leaderboard)
         "XLY": "Consumer Discretionary",
@@ -268,31 +305,6 @@ def fetch_market_data():
                     "values": norm_50
                 }
 
-            # Write individual history file for the modal (Price and 50DMA over last 90 trading days)
-            series = history_data[ticker].dropna()
-            if not series.empty:
-                # Calculate 50DMA using pandas rolling
-                dma50 = series.rolling(window=50).mean()
-                
-                # Take the last 90 trading days of data to show in the chart
-                dates_str = [d.strftime("%Y-%m-%d") for d in series.tail(90).index]
-                prices_list = series.tail(90).round(2).tolist()
-                dma50_list = dma50.tail(90).round(2).tolist()
-                
-                ticker_history = {
-                    "ticker": ticker,
-                    "description": sectors[ticker],
-                    "dates": dates_str,
-                    "prices": prices_list,
-                    "dma50": dma50_list
-                }
-                
-                # Replace any NaN in dma50 with None (JSON null) for clean chart.js parsing
-                ticker_history["dma50"] = [None if pd.isna(x) else x for x in ticker_history["dma50"]]
-                
-                with open(f"history/{ticker}.json", "w") as hf:
-                    json.dump(ticker_history, hf, indent=2)
-
     # Fetch Leaderboard Details
     leaderboard = []
     print("Fetching leaderboard details...")
@@ -346,8 +358,6 @@ def fetch_market_data():
                 # Try getting holdings from yfinance
                 top_h = t.funds_data.top_holdings
                 if top_h is not None and not top_h.empty:
-                    # Identify symbol/ticker and percent columns
-                    # In newer yfinance versions, DataFrame index contains ticker symbols, and columns are Name and Holding Percent
                     pct_col = next((c for c in top_h.columns if 'percent' in c.lower() or 'weight' in c.lower() or 'value' in c.lower()), None)
                     if pct_col:
                         for symbol, row in top_h.head(5).iterrows():
@@ -396,13 +406,60 @@ def fetch_market_data():
         "leaderboard": leaderboard
     }
 
-def main():
+
+def fetch_custom_ticker(ticker, force=False):
+    """
+    Fetch and cache detailed chart data for a single custom ticker.
+    Returns the data dict on success, None on failure.
+    Respects the 24-hour cache unless force=True.
+    """
+    ticker = ticker.strip().upper()
+    cache_path = f"history/{ticker}.json"
+
+    if not force and is_cache_fresh(cache_path):
+        print(f"  [cache] {ticker} — data is fresh, skipping download.")
+        with open(cache_path, "r") as cf:
+            return json.load(cf)
+
+    print(f"  Fetching data for custom ticker {ticker}...")
+    spread_data = fetch_ma_spread(tickers=(ticker,), lookback_days=126, force=True)
+    if ticker not in spread_data:
+        print(f"  ERROR: Could not fetch data for {ticker}. It may be an invalid or delisted ticker.")
+        return None
+
+    data = spread_data[ticker]
+
+    # Also enrich with a display name from yfinance info
+    try:
+        info = yf.Ticker(ticker).info
+        name = info.get("longName") or info.get("shortName") or ticker
+        data["name"] = name
+        data["sector"] = info.get("sector", "")
+        data["industry"] = info.get("industry", "")
+        data["marketCap"] = info.get("marketCap", None)
+        data["fiftyTwoWeekHigh"] = info.get("fiftyTwoWeekHigh", None)
+        data["fiftyTwoWeekLow"] = info.get("fiftyTwoWeekLow", None)
+        data["trailingPE"] = info.get("trailingPE", None)
+    except Exception:
+        data["name"] = ticker
+
+    data["ticker"] = ticker
+    data["fetched_at"] = datetime.now().isoformat()
+    os.makedirs("history", exist_ok=True)
+    with open(cache_path, "w") as hf:
+        json.dump(data, hf, indent=2)
+
+    print(f"  Saved {cache_path}")
+    return data
+
+
+def main(force=False):
     print("Collecting dashboard data...")
     fg_data = fetch_fear_and_greed()
-    market_data = fetch_market_data()
+    market_data = fetch_market_data(force=force)
     # Get MA spread for QQQ, IWM, and DIA only (shown in the main page card)
     ma_spread_tickers = ("QQQ", "IWM", "DIA")
-    ma_spread_data = fetch_ma_spread(tickers=ma_spread_tickers)
+    ma_spread_data = fetch_ma_spread(tickers=ma_spread_tickers, force=force)
     
     # Save individual MA spread history files in a 'history' folder for modal popup requests
     print("Generating individual ETF MA spread files...")
@@ -417,17 +474,36 @@ def main():
             
     # Generate spread data for all tickers and save as JSON files
     for ticker in all_tickers:
+        cache_path = f"history/{ticker}.json"
+        if not force and is_cache_fresh(cache_path):
+            print(f"Skipping {ticker} (fresh cache)")
+            continue
         print(f"Calculating MA spread for {ticker}...")
-        ticker_spread = fetch_ma_spread(tickers=(ticker,), lookback_days=126)
+        ticker_spread = fetch_ma_spread(tickers=(ticker,), lookback_days=126, force=True)
         if ticker in ticker_spread:
             with open(f"history/{ticker}.json", "w") as hf:
                 json.dump(ticker_spread[ticker], hf, indent=2)
     
+    # Also refresh any custom tickers that are stale
+    custom = load_custom_tickers()
+    if custom:
+        print("Refreshing custom tickers...")
+        for ticker in list(custom.keys()):
+            cache_path = f"history/{ticker}.json"
+            if not force and is_cache_fresh(cache_path):
+                print(f"Skipping custom {ticker} (fresh cache)")
+                continue
+            result = fetch_custom_ticker(ticker, force=True)
+            if result:
+                custom[ticker] = {"name": result.get("name", ticker), "fetched_at": result.get("fetched_at", "")}
+        save_custom_tickers(custom)
+
     output = {
         "fear_greed": fg_data,
         "relative_strength": market_data["relative_strength"],
         "leaderboard": market_data["leaderboard"],
         "ma_spread": ma_spread_data,
+        "custom_tickers": custom,
         "last_updated": datetime.now().isoformat()
     }
     
@@ -435,5 +511,42 @@ def main():
         json.dump(output, f, indent=2)
     print("Dashboard data successfully updated and saved to data.json.")
 
+
 if __name__ == "__main__":
-    main()
+    args = sys.argv[1:]
+    force = "--force" in args
+
+    if "--add" in args:
+        idx = args.index("--add")
+        if idx + 1 >= len(args):
+            print("Usage: py update_data.py --add <TICKER> [--force]")
+            sys.exit(1)
+        ticker_to_add = args[idx + 1].strip().upper()
+        print(f"=== Adding custom ticker: {ticker_to_add} ===")
+        result = fetch_custom_ticker(ticker_to_add, force=True)
+        if result is None:
+            print(f"Failed to fetch data for {ticker_to_add}. Aborting.")
+            sys.exit(1)
+
+        custom = load_custom_tickers()
+        custom[ticker_to_add] = {
+            "name": result.get("name", ticker_to_add),
+            "fetched_at": result.get("fetched_at", datetime.now().isoformat())
+        }
+        save_custom_tickers(custom)
+        print(f"[OK] {ticker_to_add} added to custom_tickers.json")
+
+        # Rebuild data.json so the UI picks up the new ticker immediately
+        print("Updating data.json...")
+        # Only need to reload the main data.json to inject custom_tickers
+        if os.path.exists("data.json"):
+            with open("data.json", "r") as f:
+                existing = json.load(f)
+            existing["custom_tickers"] = custom
+            with open("data.json", "w") as f:
+                json.dump(existing, f, indent=2)
+            print("data.json updated with new custom ticker list.")
+        else:
+            print("data.json not found — run `py update_data.py` first to generate it.")
+    else:
+        main(force=force)

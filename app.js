@@ -117,6 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup modal event listeners
     setupModalListeners();
 
+    // Setup custom ticker tab listeners
+    setupCustomTickerListeners();
+
     // Tab switching logic
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -140,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+
 async function loadData() {
     const refreshBtn = document.getElementById('refresh-btn');
     refreshBtn.disabled = true;
@@ -158,6 +162,7 @@ async function loadData() {
         renderCharts(fullData.relative_strength);
         renderLeaderboard();
         renderMaSpread(fullData.ma_spread);
+        renderCustomTickerChips(fullData.custom_tickers);
     } catch (error) {
         console.error('Error fetching dashboard data:', error);
         document.getElementById('last-updated-text').textContent = 'Error loading data';
@@ -1600,4 +1605,425 @@ function drawModalPriceMaChart(data, ticker) {
     });
 }
 
+// ── Custom Ticker Tab ──────────────────────────────────────────────────────────
 
+let customCharts = { rs: null, spread: null, price: null };
+let currentCustomTicker = null;
+
+function setupCustomTickerListeners() {
+    const loadBtn = document.getElementById('custom-ticker-load-btn');
+    const input = document.getElementById('custom-ticker-input');
+
+    loadBtn.addEventListener('click', () => {
+        const ticker = input.value.trim().toUpperCase();
+        if (ticker) loadCustomTickerData(ticker);
+    });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const ticker = input.value.trim().toUpperCase();
+            if (ticker) loadCustomTickerData(ticker);
+        }
+    });
+}
+
+function renderCustomTickerChips(customTickers) {
+    const chipsEl = document.getElementById('custom-ticker-chips');
+    if (!chipsEl) return;
+    chipsEl.innerHTML = '';
+
+    if (!customTickers || Object.keys(customTickers).length === 0) return;
+
+    Object.entries(customTickers).forEach(([ticker, meta]) => {
+        const chip = document.createElement('button');
+        chip.className = 'custom-chip';
+        chip.id = `chip-${ticker}`;
+        chip.innerHTML = `<span class="chip-dot"></span>${ticker}`;
+        if (meta && meta.name && meta.name !== ticker) {
+            chip.title = meta.name;
+        }
+        chip.addEventListener('click', () => {
+            document.getElementById('custom-ticker-input').value = ticker;
+            loadCustomTickerData(ticker);
+        });
+        chipsEl.appendChild(chip);
+    });
+}
+
+async function loadCustomTickerData(ticker) {
+    ticker = ticker.trim().toUpperCase();
+    currentCustomTicker = ticker;
+
+    // Update chip active state
+    document.querySelectorAll('.custom-chip').forEach(c => c.classList.remove('active'));
+    const activeChip = document.getElementById(`chip-${ticker}`);
+    if (activeChip) activeChip.classList.add('active');
+
+    // Update the command hint
+    const cmdEl = document.getElementById('custom-cmd-display');
+    if (cmdEl) cmdEl.textContent = `py update_data.py --add ${ticker}`;
+
+    // Show loading state
+    setCustomStatus('loading', `<strong>Loading ${ticker}...</strong>`, '');
+
+    try {
+        const resp = await fetch(`history/${ticker}.json?t=${new Date().getTime()}`);
+        if (!resp.ok) throw new Error('not_found');
+        const data = await resp.json();
+
+        // Success — render everything
+        setCustomStatus('success',
+            `<strong>${ticker}</strong>${data.name && data.name !== ticker ? ` — ${data.name}` : ''} loaded successfully`,
+            `Cached data: ${data.fetched_at ? new Date(data.fetched_at).toLocaleString() : 'N/A'}`
+        );
+        renderCustomMetaBar(ticker, data);
+        renderCustomCharts(ticker, data);
+        document.getElementById('custom-charts-area').style.display = 'flex';
+
+    } catch (err) {
+        document.getElementById('custom-charts-area').style.display = 'none';
+        destroyCustomCharts();
+        setCustomStatus('error',
+            `No cached data found for <strong>${ticker}</strong>`,
+            `To fetch this ticker's data, run the following command in your terminal, then refresh the dashboard:`
+        );
+    }
+}
+
+function setCustomStatus(type, title, sub) {
+    const panel = document.getElementById('custom-status-panel');
+    const iconEl = panel.querySelector('.custom-status-icon i');
+    const titleEl = panel.querySelector('.custom-status-title');
+    const subEl = panel.querySelector('.custom-status-sub');
+
+    panel.className = 'custom-status-panel ' + (type === 'error' ? 'error' : type === 'success' ? 'success' : '');
+
+    const icons = { loading: 'fa-spinner fa-spin', error: 'fa-circle-exclamation', success: 'fa-circle-check', info: 'fa-circle-info' };
+    iconEl.className = `fa-solid ${icons[type] || 'fa-circle-info'}`;
+
+    titleEl.innerHTML = title;
+    subEl.innerHTML = sub;
+}
+
+function renderCustomMetaBar(ticker, data) {
+    const el = document.getElementById('custom-ticker-meta');
+    if (!el) return;
+
+    const lastPrice = data.prices && data.prices.length ? data.prices[data.prices.length - 1] : null;
+    const spread = data.values && data.values.length ? data.values[data.values.length - 1] : null;
+    const spreadClass = spread !== null ? (spread > 0 ? 'positive' : 'negative') : '';
+    const spreadSign = spread !== null && spread > 0 ? '+' : '';
+
+    const badges = [
+        { label: 'Ticker', value: ticker, cls: 'ticker-sym' },
+        { label: 'Name', value: data.name || '—' },
+        lastPrice !== null ? { label: 'Last Price', value: `$${lastPrice.toFixed(2)}` } : null,
+        data.sector ? { label: 'Sector', value: data.sector } : null,
+        spread !== null ? { label: '50D MA Spread', value: `${spreadSign}${spread.toFixed(2)}%`, cls: spreadClass } : null,
+        data.trailingPE ? { label: 'P/E (TTM)', value: data.trailingPE.toFixed(1) } : null,
+        data.fiftyTwoWeekHigh ? { label: '52W High', value: `$${data.fiftyTwoWeekHigh.toFixed(2)}` } : null,
+        data.fiftyTwoWeekLow ? { label: '52W Low', value: `$${data.fiftyTwoWeekLow.toFixed(2)}` } : null,
+    ].filter(Boolean);
+
+    el.innerHTML = badges.map(b => `
+        <div class="custom-meta-badge">
+            <span class="custom-meta-label">${b.label}</span>
+            <span class="custom-meta-value ${b.cls || ''}">${b.value}</span>
+        </div>`).join('');
+}
+
+function destroyCustomCharts() {
+    ['rs', 'spread', 'price'].forEach(key => {
+        if (customCharts[key]) {
+            customCharts[key].destroy();
+            customCharts[key] = null;
+        }
+    });
+}
+
+function renderCustomCharts(ticker, data) {
+    destroyCustomCharts();
+    renderCustomRSChart(ticker, data);
+    renderCustomSpreadChart(ticker, data);
+    renderCustomPriceChart(ticker, data);
+}
+
+// Chart 1: Relative Strength vs SPY
+function renderCustomRSChart(ticker, data) {
+    const canvas = document.getElementById('custom-rs-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const rs = data.relative_strength;
+    if (!rs || !rs.length) {
+        document.getElementById('custom-rs-legend').innerHTML = '<span style="color:#6b7280;font-size:0.8rem;">Relative strength data not available</span>';
+        return;
+    }
+
+    const dates = data.dates;
+    const values = rs;
+
+    // Compute 10-day SMA of relative strength
+    const smaPeriod = 10;
+    const smaValues = values.map((_, i) => {
+        if (i < smaPeriod - 1) return null;
+        const slice = values.slice(i - smaPeriod + 1, i + 1);
+        return slice.reduce((a, b) => a + b, 0) / smaPeriod;
+    });
+
+    // Colour segments above/below 100
+    const aboveColors = values.map(v => v >= 100 ? 'rgba(16, 185, 129, 0.85)' : 'rgba(239, 68, 68, 0.85)');
+
+    // Custom legend
+    document.getElementById('custom-rs-legend').innerHTML = `
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#10b981"></span>Outperforming SPY</div>
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ef4444"></span>Underperforming SPY</div>
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#9ca3af;border-radius:0;height:2px;width:14px;"></span>10-Day SMA</div>`;
+
+    customCharts.rs = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dates,
+            datasets: [
+                {
+                    label: 'Relative Strength',
+                    data: values,
+                    backgroundColor: aboveColors,
+                    borderColor: aboveColors,
+                    borderWidth: 0,
+                    barPercentage: 0.85,
+                    categoryPercentage: 0.9,
+                    order: 2
+                },
+                {
+                    label: '10-Day SMA',
+                    data: smaValues,
+                    type: 'line',
+                    borderColor: 'rgba(156, 163, 175, 0.8)',
+                    borderWidth: 1.5,
+                    borderDash: [4, 3],
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.3,
+                    order: 1
+                }
+            ]
+        },
+        options: customChartOptions({
+            yLabel: v => v.toFixed(1),
+            tooltipLabel: (ctx) => {
+                const val = ctx.parsed.y;
+                if (val === null) return `${ctx.dataset.label}: N/A`;
+                return `${ctx.dataset.label}: ${val.toFixed(2)}`;
+            }
+        })
+    });
+}
+
+// Chart 2: 50-Day MA Spread with std-dev bands
+function renderCustomSpreadChart(ticker, data) {
+    const canvas = document.getElementById('custom-spread-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    if (!data.values || !data.values.length) return;
+
+    const { dates, values, mean, std1_upper, std1_lower, std2_upper, std2_lower } = data;
+
+    // Colour points by region
+    const pointBg = values.map(v => {
+        if (v >= std2_upper) return '#ef4444';
+        if (v <= std2_lower) return '#10b981';
+        if (v >= std1_upper) return 'rgba(239,68,68,0.5)';
+        if (v <= std1_lower) return 'rgba(16,185,129,0.5)';
+        return 'rgba(6,182,212,0.5)';
+    });
+    const pointRadius = values.map(v => (v >= std2_upper || v <= std2_lower) ? 4 : 0);
+
+    // Band plugin (same as modal)
+    const bandPlugin = {
+        id: 'customSpreadBands',
+        beforeDraw(chart) {
+            const { ctx: c, chartArea, scales: { y } } = chart;
+            if (!chartArea) return;
+            const bands = [
+                { from: std2_upper, to: y.max, color: 'rgba(220,38,38,0.18)' },
+                { from: std1_upper, to: std2_upper, color: 'rgba(239,68,68,0.10)' },
+                { from: std1_lower, to: std2_lower, color: 'rgba(16,185,129,0.10)' },
+                { from: y.min, to: std2_lower, color: 'rgba(16,185,129,0.18)' }
+            ];
+            c.save();
+            bands.forEach(band => {
+                const yTop = y.getPixelForValue(Math.max(band.from, band.to));
+                const yBottom = y.getPixelForValue(Math.min(band.from, band.to));
+                c.fillStyle = band.color;
+                c.fillRect(chartArea.left, Math.min(yTop, chartArea.top), chartArea.width, Math.max(yBottom - yTop, 0));
+            });
+            c.restore();
+        }
+    };
+
+    document.getElementById('custom-spread-legend').innerHTML = `
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ef4444"></span>Extreme Overbought (&ge;+2 SD)</div>
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#10b981"></span>Extreme Oversold (&le;-2 SD)</div>`;
+
+    customCharts.spread = new Chart(ctx, {
+        type: 'line',
+        plugins: [bandPlugin],
+        data: {
+            labels: dates,
+            datasets: [{
+                label: `${ticker} vs 50-DMA (%)`,
+                data: values,
+                borderColor: '#06b6d4',
+                borderWidth: 1.8,
+                pointRadius: pointRadius,
+                pointHoverRadius: 5,
+                pointBackgroundColor: pointBg,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 1.2,
+                fill: false,
+                tension: 0.18
+            }, {
+                label: 'Mean',
+                data: Array(dates.length).fill(mean),
+                borderColor: 'rgba(255,255,255,0.3)',
+                borderWidth: 1,
+                borderDash: [5, 4],
+                pointRadius: 0,
+                fill: false
+            }]
+        },
+        options: customChartOptions({
+            yLabel: v => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`,
+            tooltipLabel: (ctx) => {
+                const val = ctx.parsed.y;
+                if (val === null) return `${ctx.dataset.label}: N/A`;
+                return `${ctx.dataset.label}: ${val > 0 ? '+' : ''}${val.toFixed(2)}%`;
+            }
+        })
+    });
+}
+
+// Chart 3: Price & 20/50-Day MAs with OB/OS dots
+function renderCustomPriceChart(ticker, data) {
+    const canvas = document.getElementById('custom-price-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    if (!data.prices || !data.prices.length) return;
+
+    const { dates, prices, ma20, ma50, values: spreads, std2_upper, std2_lower } = data;
+
+    // Colour dots on price for OB/OS
+    const dotRadius = prices.map((_, i) => {
+        const s = spreads[i];
+        return (s >= std2_upper || s <= std2_lower) ? 5 : 0;
+    });
+    const dotBg = prices.map((_, i) => {
+        const s = spreads[i];
+        if (s >= std2_upper) return '#ef4444';
+        if (s <= std2_lower) return '#10b981';
+        return 'transparent';
+    });
+
+    document.getElementById('custom-price-legend').innerHTML = `
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#06b6d4"></span>Price</div>
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#f59e0b"></span>20-Day MA</div>
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ec4899"></span>50-Day MA</div>
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ef4444"></span>Overbought</div>
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#10b981"></span>Oversold</div>`;
+
+    customCharts.price = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [
+                {
+                    label: 'Price',
+                    data: prices,
+                    borderColor: '#06b6d4',
+                    borderWidth: 2.2,
+                    pointRadius: dotRadius,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: dotBg,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 1.5,
+                    fill: false,
+                    tension: 0.15
+                },
+                {
+                    label: '20-Day MA',
+                    data: ma20,
+                    borderColor: '#f59e0b',
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false,
+                    tension: 0.15
+                },
+                {
+                    label: '50-Day MA',
+                    data: ma50,
+                    borderColor: '#ec4899',
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false,
+                    tension: 0.15
+                }
+            ]
+        },
+        options: customChartOptions({
+            yLabel: v => `$${v}`,
+            tooltipLabel: (ctx) => {
+                const val = ctx.parsed.y;
+                if (val === null || val === undefined) return `${ctx.dataset.label}: N/A`;
+                return `${ctx.dataset.label}: $${val.toFixed(2)}`;
+            }
+        })
+    });
+}
+
+// Shared chart options factory for custom tab
+function customChartOptions({ yLabel, tooltipLabel }) {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: '#1f2937',
+                titleColor: '#9ca3af',
+                bodyColor: '#f3f4f6',
+                borderColor: 'rgba(255,255,255,0.08)',
+                borderWidth: 1,
+                callbacks: { label: tooltipLabel }
+            }
+        },
+        scales: {
+            x: {
+                grid: { display: false },
+                ticks: { color: '#6b7280', maxTicksLimit: 10, font: { family: 'Plus Jakarta Sans', size: 10 } }
+            },
+            y: {
+                grid: { color: 'rgba(255,255,255,0.05)' },
+                ticks: { color: '#6b7280', callback: yLabel, font: { family: 'Plus Jakarta Sans', size: 10 } }
+            }
+        }
+    };
+}
+
+// Copy the CLI command to clipboard
+function copyCustomCmd() {
+    const code = document.getElementById('custom-cmd-display');
+    if (!code) return;
+    navigator.clipboard.writeText(code.textContent).then(() => {
+        const btn = document.querySelector('.custom-cmd-copy-btn');
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+            setTimeout(() => { btn.innerHTML = '<i class="fa-regular fa-copy"></i>'; }, 1500);
+        }
+    });
+}
