@@ -182,14 +182,15 @@ function renderFearGreed(fg) {
     });
 
     // Draw segment label text in arc
-    ctx.font = '700 8px "Outfit"';
+    ctx.font = '600 9px "Outfit"';
     ctx.fillStyle = '#9ca3af';
     segments.forEach(seg => {
         const segStartAngle = startAngle + (seg.min / 100) * totalSpan;
         const segEndAngle = startAngle + (seg.max / 100) * totalSpan;
         const midAngle = segStartAngle + (segEndAngle - segStartAngle) / 2;
         
-        const textRadius = radius + strokeWidth + 12;
+        // Increase text radius to prevent cropping on outer edges
+        const textRadius = radius + strokeWidth - 2;
         const x = centerX + Math.cos(midAngle) * textRadius;
         const y = centerY + Math.sin(midAngle) * textRadius;
         
@@ -199,7 +200,7 @@ function renderFearGreed(fg) {
         
         const isCurrentValInSeg = fg.score >= seg.min && fg.score <= seg.max;
         ctx.fillStyle = isCurrentValInSeg ? seg.activeColor : '#6b7280';
-        ctx.fillText(seg.label, 0, 0);
+        ctx.fillText(seg.label, 0, -10); // Offset upwards to clear arc boundary
         ctx.restore();
     });
 

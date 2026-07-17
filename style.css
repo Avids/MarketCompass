@@ -207,7 +207,7 @@ body {
 .gauge-wrapper {
     position: relative;
     width: 300px;
-    height: 180px;
+    height: 200px;
 }
 
 .gauge-container {
@@ -216,7 +216,7 @@ body {
 
 .gauge-value-display {
     position: absolute;
-    bottom: -20px;
+    bottom: -45px;
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
