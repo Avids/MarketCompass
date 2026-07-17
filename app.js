@@ -5,6 +5,7 @@ let currentSortColumn = 'wk';
 let currentSortOrder = 'desc';
 let currentMaSpreadTicker = 'QQQ';
 let maSpreadChart = null;
+let modalMaSpreadChart = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
@@ -339,9 +340,10 @@ function renderCharts(relStrengthData) {
         const pctChange = (lastVal - 100).toFixed(2);
         const sign = pctChange >= 0 ? '+' : '';
 
-        // Create card HTML
+        // Create card HTML with click-to-open modal functionality
         const card = document.createElement('div');
         card.className = 'chart-item-card';
+        card.setAttribute('data-ticker', ticker);
         card.innerHTML = `
             <div class="chart-header">
                 <div class="chart-title">
@@ -357,6 +359,11 @@ function renderCharts(relStrengthData) {
             </div>
         `;
         container.appendChild(card);
+
+        // Add click event to open modal with sector MA spread chart
+        card.addEventListener('click', () => {
+            openSectorModal(ticker, desc);
+        });
 
         // Render mini sparkline chart
         setTimeout(() => {
@@ -678,3 +685,171 @@ function renderLeaderboard(query = '') {
         tbody.appendChild(tr);
     });
 }
+
+// Modal functions for sector MA spread chart
+function openSectorModal(ticker, description) {
+    const modal = document.getElementById('sector-modal');
+    const titleEl = document.getElementById('modal-sector-title');
+    
+    if (!fullData || !fullData.ma_spread || !fullData.ma_spread[ticker]) {
+        console.warn(`No MA spread data available for ${ticker}`);
+        return;
+    }
+    
+    // Update modal title
+    titleEl.textContent = `${ticker} - 50-Day MA Spread`;
+    
+    // Show modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    
+    // Render the MA spread chart for this sector
+    setTimeout(() => {
+        drawModalMaSpreadChart(fullData.ma_spread[ticker], ticker);
+    }, 100);
+}
+
+function closeSectorModal() {
+    const modal = document.getElementById('sector-modal');
+    modal.style.display = 'none';
+    document.body.style.overflow = ''; // Restore scrolling
+    
+    // Destroy modal chart to free memory
+    if (modalMaSpreadChart) {
+        modalMaSpreadChart.destroy();
+        modalMaSpreadChart = null;
+    }
+}
+
+function drawModalMaSpreadChart(item, ticker) {
+    if (!item || !item.values || !item.values.length) return;
+    
+    const ctx = document.getElementById('modal-ma-spread-chart').getContext('2d');
+    
+    if (modalMaSpreadChart) {
+        modalMaSpreadChart.destroy();
+    }
+    
+    // Same band plugin as main MA spread chart
+    const bandPlugin = {
+        id: 'maSpreadBands',
+        beforeDraw(chart) {
+            const { ctx, chartArea, scales: { y } } = chart;
+            if (!chartArea) return;
+            
+            const bands = [
+                { from: item.std2_upper, to: y.max, color: 'rgba(220, 38, 38, 0.18)' },
+                { from: item.std1_upper, to: item.std2_upper, color: 'rgba(239, 68, 68, 0.10)' },
+                { from: item.std1_lower, to: item.std2_lower, color: 'rgba(16, 185, 129, 0.10)' },
+                { from: y.min, to: item.std2_lower, color: 'rgba(16, 185, 129, 0.18)' }
+            ];
+            
+            ctx.save();
+            bands.forEach(band => {
+                const yTop = y.getPixelForValue(Math.max(band.from, band.to));
+                const yBottom = y.getPixelForValue(Math.min(band.from, band.to));
+                ctx.fillStyle = band.color;
+                ctx.fillRect(chartArea.left, yTop, chartArea.right - chartArea.left, yBottom - yTop);
+            });
+            
+            // Draw zero line reference
+            const zeroY = y.getPixelForValue(0);
+            if (zeroY >= chartArea.top && zeroY <= chartArea.bottom) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([6, 4]);
+                ctx.beginPath();
+                ctx.moveTo(chartArea.left, zeroY);
+                ctx.lineTo(chartArea.right, zeroY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+            
+            ctx.restore();
+        }
+    };
+    
+    const values = item.values;
+    const vMin = Math.min(...values, item.std2_lower);
+    const vMax = Math.max(...values, item.std2_upper);
+    const pad = (vMax - vMin) * 0.08;
+    
+    modalMaSpreadChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: item.dates,
+            datasets: [{
+                label: '50-DMA Spread %',
+                data: values,
+                borderColor: '#06b6d4',
+                borderWidth: 2,
+                pointRadius: 0,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#06b6d4',
+                fill: false,
+                tension: 0.15
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: '#1f2937',
+                    titleColor: '#9ca3af',
+                    bodyColor: '#f3f4f6',
+                    borderColor: 'rgba(255,255,255,0.08)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: (context) => `Spread: ${context.parsed.y.toFixed(2)}%`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#6b7280', maxTicksLimit: 12 }
+                },
+                y: {
+                    suggestedMin: vMin - pad,
+                    suggestedMax: vMax + pad,
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#6b7280', callback: (v) => `${v}%` }
+                }
+            }
+        },
+        plugins: [bandPlugin]
+    });
+}
+
+// Setup modal event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Close modal when clicking close button
+    const closeBtn = document.getElementById('modal-close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeSectorModal);
+    }
+    
+    // Close modal when clicking outside content
+    const modalOverlay = document.getElementById('sector-modal');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                closeSectorModal();
+            }
+        });
+    }
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('sector-modal');
+            if (modal && modal.style.display === 'flex') {
+                closeSectorModal();
+            }
+        }
+    });
+});
