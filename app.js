@@ -19,14 +19,14 @@ const etfGroups = {
             tickers: ["SPY", "DIA", "QQQ", "IJH", "IJR", "IWB", "IWM", "IWV"]
         },
         {
-            id: 'us-styles',
-            title: 'Style & Dividend',
-            tickers: ["IVW", "IJK", "IJT", "IVE", "IJJ", "IJS", "DVY", "RSP"]
-        },
-        {
             id: 'us-sectors',
             title: 'Sectors',
             tickers: ["XLY", "XLP", "XLE", "XLF", "XLV", "XLI", "XLB", "XLK", "XLC", "XLU", "XLRE"]
+        },
+        {
+            id: 'us-styles',
+            title: 'Other Indices',
+            tickers: ["IVW", "IJK", "IJT", "IVE", "IJJ", "IJS", "DVY", "RSP"]
         },
         {
             id: 'us-thematics',
@@ -57,7 +57,7 @@ const etfGroups = {
         },
         {
             id: 'global-fixed-income',
-            title: 'Fixed Income',
+            title: 'Bond Market',
             tickers: ["SHY", "IEF", "TLT", "AGG", "BND", "TIP"]
         }
     ]
