@@ -6,6 +6,7 @@ let currentSortOrder = 'desc';
 let currentMaSpreadTicker = 'QQQ';
 let maSpreadChart = null;
 let modalMaSpreadChart = null;
+let currentActiveTicker = 'QQQ';
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
@@ -725,6 +726,7 @@ function renderLeaderboard(query = '') {
 async function openSectorModal(ticker, description) {
     const modal = document.getElementById('sector-modal');
     const titleEl = document.getElementById('modal-sector-title');
+    currentActiveTicker = ticker;
     
     // Update modal title
     titleEl.textContent = `${ticker} - 50-Day MA Spread (Loading...)`;
@@ -892,16 +894,103 @@ function setupModalListeners() {
         copyBtn.addEventListener('click', async () => {
             try {
                 const canvas = document.getElementById('modal-ma-spread-chart');
-                if (!canvas) return;
+                if (!canvas || !modalMaSpreadChart) return;
                 
-                // Convert canvas to blob
-                canvas.toBlob(async (blob) => {
+                // 1. Temporary export styling (high contrast for white background)
+                const chart = modalMaSpreadChart;
+                const originalXGridColor = chart.options.scales.x.grid.color;
+                const originalYGridColor = chart.options.scales.y.grid.color;
+                const originalXTicksColor = chart.options.scales.x.ticks.color;
+                const originalYTicksColor = chart.options.scales.y.ticks.color;
+                
+                // Get zero line dataset
+                const zeroLineDataset = chart.data.datasets.find(d => d.label === 'Zero Line');
+                const originalZeroLineColor = zeroLineDataset ? zeroLineDataset.borderColor : null;
+                
+                // Apply white export styles
+                chart.options.scales.x.grid.color = 'rgba(0, 0, 0, 0.05)';
+                chart.options.scales.y.grid.color = 'rgba(0, 0, 0, 0.05)';
+                chart.options.scales.x.ticks.color = '#4b5563'; // gray-600
+                chart.options.scales.y.ticks.color = '#4b5563'; // gray-600
+                if (zeroLineDataset) {
+                    zeroLineDataset.borderColor = 'rgba(0, 0, 0, 0.3)';
+                }
+                
+                // Update chart layout synchronously without animation
+                chart.update('none');
+                
+                // 2. Setup offscreen canvas
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                const headerHeight = 75;
+                const footerHeight = 40;
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height + headerHeight + footerHeight;
+                
+                // Fill with solid white background
+                tempCtx.fillStyle = '#ffffff';
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // 3. Draw Header
+                // Ticker / Title
+                tempCtx.fillStyle = '#111827'; // gray-900
+                tempCtx.font = 'bold 16px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                tempCtx.fillText(`${currentActiveTicker} - 50-Day Moving Average Spread`, 20, 32);
+                
+                // Subtitle
+                tempCtx.fillStyle = '#4b5563'; // gray-600
+                tempCtx.font = '500 12px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                tempCtx.fillText('Price vs 50-DMA spread, last 12 months — bands at 1 and 2 standard deviations', 20, 54);
+                
+                // Divider line below header
+                tempCtx.strokeStyle = '#e5e7eb'; // gray-200
+                tempCtx.lineWidth = 1;
+                tempCtx.beginPath();
+                tempCtx.moveTo(20, 68);
+                tempCtx.lineTo(tempCanvas.width - 20, 68);
+                tempCtx.stroke();
+                
+                // 4. Draw the chart canvas onto the offscreen canvas
+                tempCtx.drawImage(canvas, 0, headerHeight);
+                
+                // 5. Draw Footer
+                // Divider line above footer
+                tempCtx.strokeStyle = '#e5e7eb'; // gray-200
+                tempCtx.beginPath();
+                tempCtx.moveTo(20, tempCanvas.height - 35);
+                tempCtx.lineTo(tempCanvas.width - 20, tempCanvas.height - 35);
+                tempCtx.stroke();
+                
+                // Date/Timestamp
+                const todayStr = new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                tempCtx.fillStyle = '#9ca3af'; // gray-400
+                tempCtx.font = '400 10px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                tempCtx.fillText(`Exported from MarketCompass on: ${todayStr}`, 20, tempCanvas.height - 15);
+                
+                // 6. Restore original chart visual theme
+                chart.options.scales.x.grid.color = originalXGridColor;
+                chart.options.scales.y.grid.color = originalYGridColor;
+                chart.options.scales.x.ticks.color = originalXTicksColor;
+                chart.options.scales.y.ticks.color = originalYTicksColor;
+                if (zeroLineDataset && originalZeroLineColor) {
+                    zeroLineDataset.borderColor = originalZeroLineColor;
+                }
+                chart.update('none');
+                
+                // 7. Write to clipboard
+                tempCanvas.toBlob(async (blob) => {
                     if (!blob) {
                         console.error('Failed to create blob from canvas');
                         return;
                     }
                     
-                    // Write to clipboard
                     await navigator.clipboard.write([
                         new ClipboardItem({
                             'image/png': blob
