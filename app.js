@@ -371,25 +371,12 @@ function renderCharts(relStrengthData) {
                         {
                             label: 'Rel Strength',
                             data: values,
+                            borderColor: priceColor,
                             borderWidth: 1.8,
                             pointRadius: 0,
                             pointHoverRadius: 4,
-                            // Scriptable segment borders to change colors dynamically
-                            segment: {
-                                borderColor: (ctx) => {
-                                    const index = ctx.p0DataIndex;
-                                    const val = values[index];
-                                    const sma = smaValues[index];
-                                    return val >= sma ? '#10b981' : '#ef4444';
-                                },
-                                backgroundColor: (ctx) => {
-                                    const index = ctx.p0DataIndex;
-                                    const val = values[index];
-                                    const sma = smaValues[index];
-                                    return val >= sma ? '#10b981' : '#ef4444';
-                                }
-                            },
-                            // Fill cloud between Rel Strength and 5-Day SMA (dataset index 0)
+                            pointBackgroundColor: priceColor,
+                            // Fill cloud between Rel Strength and SMA (dataset index 0)
                             fill: {
                                 target: 0,
                                 above: 'rgba(16, 185, 129, 0.08)', // Green cloud when price is above SMA
