@@ -397,6 +397,11 @@ body {
     height: 80px;
     position: relative;
     width: 100%;
+    pointer-events: none; /* Allow clicks to pass through canvas to parent card */
+}
+
+.chart-container canvas {
+    pointer-events: none; /* Ensure canvas doesn't block card clicks */
 }
 
 /* Leaderboard */
