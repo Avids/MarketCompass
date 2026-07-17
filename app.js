@@ -220,15 +220,15 @@ function renderFearGreed(fg) {
     
     // Draw center spindle
     ctx.beginPath();
-    ctx.arc(centerX, centerY, 15, 0, 2*Math.PI);
+    ctx.arc(centerX, centerY, 8, 0, 2*Math.PI);
     ctx.fillStyle = '#1f2937';
     ctx.fill();
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
     ctx.strokeStyle = '#f3f4f6';
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.arc(centerX, centerY, 5, 0, 2*Math.PI);
+    ctx.arc(centerX, centerY, 3, 0, 2*Math.PI);
     ctx.fillStyle = '#f3f4f6';
     ctx.fill();
     
