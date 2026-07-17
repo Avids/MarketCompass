@@ -998,7 +998,7 @@ function setupModalListeners() {
                     const label = isRSFullAligned ? '6 Months' : (currentDuration === '50d' ? '50 Days' : '20 Days');
                     const sma = isRSFullAligned ? '10-day' : (currentDuration === '50d' ? '10-day' : '5-day');
                     subtitleText = `Normalized relative strength compared to SPY over ${label} (plotted with ${sma} SMA)`;
-                    legendText = 'Legend: 🟢 Strength Crossover (RS > SMA) | 🔴 Weakness Crossover (RS < SMA) | - - SMA';
+                    legendText = 'Legend: 🟢 Strength | 🔴 Weakness | - - SMA';
                 } else if (currentModalView === 'ma-spread') {
                     titleText = `${currentActiveDescription} - 50-Day Moving Average Spread`;
                     subtitleText = `Price vs 50-DMA spread, last 6 months — bands at 1 and 2 standard deviations`;
@@ -1139,11 +1139,11 @@ function renderCurrentModalChart() {
         legendEl.innerHTML = `
             <div class="modal-legend-item">
                 <span class="modal-legend-marker" style="background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
-                <span>Strength Crossover (RS crosses above SMA)</span>
+                <span>Strength</span>
             </div>
             <div class="modal-legend-item">
                 <span class="modal-legend-marker" style="background: #ef4444; box-shadow: 0 0 6px #ef4444;"></span>
-                <span>Weakness Crossover (RS crosses below SMA)</span>
+                <span>Weakness</span>
             </div>
             <div class="modal-legend-item">
                 <span class="modal-legend-marker" style="background: transparent; border: 1px dashed rgba(255, 255, 255, 0.4); border-radius: 0; width: 10px; height: 0;"></span>
