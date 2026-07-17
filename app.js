@@ -998,7 +998,7 @@ function setupModalListeners() {
                     const label = isRSFullAligned ? '6 Months' : (currentDuration === '50d' ? '50 Days' : '20 Days');
                     const sma = isRSFullAligned ? '10-day' : (currentDuration === '50d' ? '10-day' : '5-day');
                     subtitleText = `Normalized relative strength compared to SPY over ${label} (plotted with ${sma} SMA)`;
-                    legendText = 'Legend: 🟢 Bullish Crossover (RS > SMA) | 🔴 Bearish Crossover (RS < SMA) | - - SMA';
+                    legendText = 'Legend: 🟢 Strength Crossover (RS > SMA) | 🔴 Weakness Crossover (RS < SMA) | - - SMA';
                 } else if (currentModalView === 'ma-spread') {
                     titleText = `${currentActiveDescription} - 50-Day Moving Average Spread`;
                     subtitleText = `Price vs 50-DMA spread, last 6 months — bands at 1 and 2 standard deviations`;
@@ -1139,11 +1139,11 @@ function renderCurrentModalChart() {
         legendEl.innerHTML = `
             <div class="modal-legend-item">
                 <span class="modal-legend-marker" style="background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
-                <span>🟢 Bullish Crossover (RS crosses above SMA)</span>
+                <span>Strength Crossover (RS crosses above SMA)</span>
             </div>
             <div class="modal-legend-item">
                 <span class="modal-legend-marker" style="background: #ef4444; box-shadow: 0 0 6px #ef4444;"></span>
-                <span>🔴 Bearish Crossover (RS crosses below SMA)</span>
+                <span>Weakness Crossover (RS crosses below SMA)</span>
             </div>
             <div class="modal-legend-item">
                 <span class="modal-legend-marker" style="background: transparent; border: 1px dashed rgba(255, 255, 255, 0.4); border-radius: 0; width: 10px; height: 0;"></span>
@@ -1225,7 +1225,7 @@ function drawModalRelativeStrengthChart(data, ticker) {
     const isBullish = currentVal >= currentSma;
     const priceColor = isBullish ? '#10b981' : '#ef4444';
 
-    // Detect Bullish / Bearish crossovers of Relative Strength vs SMA
+    // Detect Strength / Weakness crossovers of Relative Strength vs SMA
     const pointRadii = [];
     const pointBgColors = [];
     const pointBorderColors = [];
@@ -1237,13 +1237,13 @@ function drawModalRelativeStrengthChart(data, ticker) {
             const currDiff = values[i] - smaValues[i];
             
             if (prevDiff < 0 && currDiff >= 0) {
-                // Bullish Crossover
+                // Strength Crossover
                 pointRadii.push(5);
                 pointHoverRadii.push(7);
                 pointBgColors.push('#10b981'); // Green
                 pointBorderColors.push('#ffffff');
             } else if (prevDiff > 0 && currDiff <= 0) {
-                // Bearish Crossover
+                // Weakness Crossover
                 pointRadii.push(5);
                 pointHoverRadii.push(7);
                 pointBgColors.push('#ef4444'); // Red
