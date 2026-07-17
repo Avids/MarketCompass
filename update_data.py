@@ -190,21 +190,24 @@ def fetch_market_data():
         "AIS": [{"ticker": "000660.KS", "pct": 8.8}, {"ticker": "MU", "pct": 7.1}, {"ticker": "AMD", "pct": 5.0}, {"ticker": "MRVL", "pct": 4.1}, {"ticker": "SIMO", "pct": 3.7}]
     }
 
-    # Fetch 60-day historical data for SPY & sectors
+    # Fetch 200-day historical data for SPY & sectors
     tickers_list = ["SPY"] + list(sectors.keys())
     print("Downloading historical data...")
-    history_data = yf.download(tickers_list, period="90d", interval="1d")['Close']
+    history_data = yf.download(tickers_list, period="200d", interval="1d")['Close']
     
     # Check if we downloaded successfully
     if history_data.empty:
         raise ValueError("Could not download historical data from Yahoo Finance.")
         
-    # We will keep the full historical dataset downloaded (90 days) and slice it for 20 and 50 days
+    # We will keep the full historical dataset downloaded (200 days) and slice it for 20 and 50 days
     relative_strength = {}
     
     # Slice 20 and 50 trading days datasets
     history_20 = history_data.tail(20)
     history_50 = history_data.tail(50)
+    
+    # Create history directory
+    os.makedirs("history", exist_ok=True)
     
     for ticker in sectors.keys():
         if ticker in history_data:
@@ -234,6 +237,31 @@ def fetch_market_data():
                     "dates": dates_50,
                     "values": norm_50
                 }
+
+            # Write individual history file for the modal (Price and 50DMA over last 90 trading days)
+            series = history_data[ticker].dropna()
+            if not series.empty:
+                # Calculate 50DMA using pandas rolling
+                dma50 = series.rolling(window=50).mean()
+                
+                # Take the last 90 trading days of data to show in the chart
+                dates_str = [d.strftime("%Y-%m-%d") for d in series.tail(90).index]
+                prices_list = series.tail(90).round(2).tolist()
+                dma50_list = dma50.tail(90).round(2).tolist()
+                
+                ticker_history = {
+                    "ticker": ticker,
+                    "description": sectors[ticker],
+                    "dates": dates_str,
+                    "prices": prices_list,
+                    "dma50": dma50_list
+                }
+                
+                # Replace any NaN in dma50 with None (JSON null) for clean chart.js parsing
+                ticker_history["dma50"] = [None if pd.isna(x) else x for x in ticker_history["dma50"]]
+                
+                with open(f"history/{ticker}.json", "w") as hf:
+                    json.dump(ticker_history, hf, indent=2)
 
     # Fetch Leaderboard Details
     leaderboard = []
