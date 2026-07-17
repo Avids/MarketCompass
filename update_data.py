@@ -43,6 +43,7 @@ def fetch_fear_and_greed():
 
 def fetch_market_data():
     sectors = {
+        # Sectors & Thematic (from Leaderboard)
         "XLY": "Consumer Discretionary",
         "XLP": "Consumer Staples",
         "XLE": "Energy",
@@ -63,7 +64,64 @@ def fetch_market_data():
         "XBI": "Biotech",
         "XAR": "Aerospace",
         "AIQ": "AI & Big Data",
-        "AIS": "AI Infrastructure"
+        "AIS": "AI Infrastructure",
+        
+        # Asset Class Performance List (US Related)
+        "DIA": "Dow 30",
+        "QQQ": "Nasdaq 100",
+        "IJH": "S&P Midcap 400",
+        "IJR": "S&P Smallcap 600",
+        "IWB": "Russell 1000",
+        "IWM": "Russell 2000",
+        "IWV": "Russell 3000",
+        "IVW": "S&P 500 Growth",
+        "IJK": "Midcap 400 Growth",
+        "IJT": "Smallcap 600 Growth",
+        "IVE": "S&P 500 Value",
+        "IJJ": "Midcap 400 Value",
+        "IJS": "Smallcap 600 Value",
+        "DVY": "DJ Dividend",
+        "RSP": "S&P 500 Equal Weight",
+        
+        # Cryptos & Currencies
+        "GBTC": "Bitcoin Trust",
+        "ETHE": "Ethereum Trust",
+        
+        # Global
+        "EWA": "Australia",
+        "EWZ": "Brazil",
+        "EWC": "Canada",
+        "ASHR": "China",
+        "EWQ": "France",
+        "EWG": "Germany",
+        "EWH": "Hong Kong",
+        "PIN": "India",
+        "EWI": "Italy",
+        "EWJ": "Japan",
+        "EWW": "Mexico",
+        "EWP": "Spain",
+        "EWU": "UK",
+        "EFA": "EAFE",
+        "EEM": "Emerging Mkts",
+        "IOO": "Global 100",
+        "BKF": "BRIC",
+        "CWI": "All World ex US",
+        
+        # Commodities
+        "DBC": "Commodities",
+        "DBA": "Agric. Commod.",
+        "USO": "Oil",
+        "UNG": "Nat. Gas",
+        "GLD": "Gold",
+        "SLV": "Silver",
+        
+        # Treasuries & Bonds
+        "SHY": "1-3 Yr Treasuries",
+        "IEF": "7-10 Yr Treasuries",
+        "TLT": "20+ Yr Treasuries",
+        "AGG": "Aggregate Bond",
+        "BND": "Total Bond Market",
+        "TIP": "T.I.P.S."
     }
 
     # Hardcoded top holdings fallback in case yfinance top_holdings is missing or fails
@@ -172,13 +230,18 @@ def fetch_market_data():
                 # Try getting holdings from yfinance
                 top_h = t.funds_data.top_holdings
                 if top_h is not None and not top_h.empty:
-                    symbol_col = next((c for c in top_h.columns if 'symbol' in c.lower() or 'holding' in c.lower()), None)
-                    pct_col = next((c for c in top_h.columns if 'percent' in c.lower() or 'weight' in c.lower()), None)
-                    if symbol_col and pct_col:
-                        for _, row in top_h.head(5).iterrows():
+                    # Identify symbol/ticker and percent columns
+                    # In newer yfinance versions, DataFrame index contains ticker symbols, and columns are Name and Holding Percent
+                    pct_col = next((c for c in top_h.columns if 'percent' in c.lower() or 'weight' in c.lower() or 'value' in c.lower()), None)
+                    if pct_col:
+                        for symbol, row in top_h.head(5).iterrows():
+                            val = row[pct_col]
+                            if val < 1.0:
+                                val = val * 100
+                            
                             holdings.append({
-                                "ticker": row[symbol_col],
-                                "pct": round(row[pct_col] * 100, 1) if row[pct_col] < 1.0 else round(row[pct_col], 1)
+                                "ticker": str(symbol).strip(),
+                                "pct": round(val, 1)
                             })
             except Exception:
                 pass

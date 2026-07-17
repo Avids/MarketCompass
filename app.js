@@ -250,13 +250,13 @@ function renderCharts(relStrengthData) {
     const container = document.getElementById('charts-grid-container');
     container.innerHTML = ''; // Clear
 
-    // Filter to show primary GICS sector ETFs (plus any others we want to render charts for)
-    // List: XLY, XLP, XLE, XLF, XLV, XLI, XLB, XLK, XLC, XLU, XLRE
-    const chartTickers = ['XLY', 'XLP', 'XLE', 'XLF', 'XLV', 'XLI', 'XLB', 'XLK', 'XLC', 'XLU', 'XLRE'];
+    // Dynamically get all keys/tickers present in the dataset to render charts for all sectors
+    const chartTickers = Object.keys(relStrengthData);
     
     chartTickers.forEach(ticker => {
-        const item = relStrengthData[ticker];
-        if (!item) return;
+        // Get ETF full description
+        const desc = fullData.leaderboard.find(l => l.ticker === ticker)?.description || "";
+        const titleText = desc ? `${ticker} (${desc})` : ticker;
 
         // Calculate performance from first day of the 60-day series
         const lastVal = item.values[item.values.length - 1];
@@ -270,7 +270,7 @@ function renderCharts(relStrengthData) {
         card.innerHTML = `
             <div class="chart-header">
                 <div class="chart-title">
-                    <h3>${ticker}</h3>
+                    <h3>${titleText}</h3>
                     <span>vs SPY (60 Days)</span>
                 </div>
                 <div class="chart-pct ${pctClass}">
@@ -329,7 +329,10 @@ function renderCharts(relStrengthData) {
                             borderWidth: 1,
                             callbacks: {
                                 label: function(context) {
-                                    return `Rel Strength: ${context.parsed.y}%`;
+                                    const val = context.parsed.y;
+                                    const relativeChange = (val - 100).toFixed(2);
+                                    const sign = relativeChange >= 0 ? '+' : '';
+                                    return `Rel Strength: ${sign}${relativeChange}%`;
                                 }
                             }
                         }
