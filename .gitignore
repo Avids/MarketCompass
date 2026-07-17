@@ -1,1 +1,1 @@
-(update_data.py is a source file, and there are no build artifacts, dependencies, or temp files in the changes)
+(data.json is a source/config file, so according to rule #6, since there are no build artifacts, dependencies, or temp files in the changes, output nothing)
