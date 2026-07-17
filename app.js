@@ -254,6 +254,9 @@ function renderCharts(relStrengthData) {
     const chartTickers = Object.keys(relStrengthData);
     
     chartTickers.forEach(ticker => {
+        const item = relStrengthData[ticker];
+        if (!item || !item.values || !item.values.length) return;
+
         // Get ETF full description
         const desc = fullData.leaderboard.find(l => l.ticker === ticker)?.description || "";
         const titleText = desc ? `${ticker} (${desc})` : ticker;
