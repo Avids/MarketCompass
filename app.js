@@ -292,10 +292,11 @@ function renderCharts(relStrengthData) {
         const desc = fullData.leaderboard.find(l => l.ticker === ticker)?.description || "";
         const titleText = desc ? `${ticker} (${desc})` : ticker;
 
-        // Calculate 5-Day Simple Moving Average (SMA) of the relative strength values
+        // Calculate Simple Moving Average (SMA) of the relative strength values
+        // Dynamic SMA: 5-day for 20d series, 10-day for 50d series
         const values = item.values;
         const smaValues = [];
-        const smaPeriod = 5;
+        const smaPeriod = currentDuration === '50d' ? 10 : 5;
         
         for (let i = 0; i < values.length; i++) {
             if (i < smaPeriod - 1) {
@@ -358,7 +359,7 @@ function renderCharts(relStrengthData) {
                     labels: item.dates,
                     datasets: [
                         {
-                            label: '5-Day SMA',
+                            label: currentDuration === '50d' ? '10-Day SMA' : '5-Day SMA',
                             data: smaValues,
                             borderColor: 'rgba(255, 255, 255, 0.25)',
                             borderWidth: 1.2,
