@@ -1006,7 +1006,7 @@ function setupModalListeners() {
                 } else if (currentModalView === 'price-ma') {
                     titleText = `${currentActiveDescription} - Daily Price & Moving Averages`;
                     subtitleText = `Daily closing price plotted with 20-day and 50-day simple moving averages`;
-                    legendText = 'Legend: ▲ Golden Cross (20 MA crosses above 50 MA) | ◆ Death Cross (20 MA crosses below 50 MA)';
+                    legendText = 'Legend: 🔴 Extreme Overbought (Spread >= +2 SD) | 🟢 Extreme Oversold (Spread <= -2 SD)';
                 }
                 
                 tempCtx.fillText(titleText, 20, 28);
@@ -1168,12 +1168,12 @@ function renderCurrentModalChart() {
     } else if (currentModalView === 'price-ma') {
         legendEl.innerHTML = `
             <div class="modal-legend-item">
-                <span class="modal-legend-marker triangle"></span>
-                <span>▲ Golden Cross (20 MA crosses above 50 MA)</span>
+                <span class="modal-legend-marker" style="background: #ef4444; box-shadow: 0 0 6px #ef4444;"></span>
+                <span>🔴 Extreme Overbought (Spread >= +2 SD)</span>
             </div>
             <div class="modal-legend-item">
-                <span class="modal-legend-marker diamond"></span>
-                <span>◆ Death Cross (20 MA crosses below 50 MA)</span>
+                <span class="modal-legend-marker" style="background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
+                <span>🟢 Extreme Oversold (Spread <= -2 SD)</span>
             </div>
         `;
         if (modalHistoryData) {
@@ -1300,7 +1300,7 @@ function drawModalPriceMaChart(data, ticker) {
     const ctx = document.getElementById('modal-ma-spread-chart').getContext('2d');
     if (!data.prices) return;
     
-    // Detect Golden / Death Crosses
+    // Detect Extreme OB / OS from spread values (data.values) to draw dots on the Price line
     const pointRadii = [];
     const pointBgColors = [];
     const pointBorderColors = [];
@@ -1308,35 +1308,24 @@ function drawModalPriceMaChart(data, ticker) {
     const pointStyles = [];
     
     const prices = data.prices;
-    const ma20 = data.ma20;
-    const ma50 = data.ma50;
+    const spreads = data.values;
     
     for (let i = 0; i < prices.length; i++) {
-        if (i > 0 && ma20[i] !== null && ma50[i] !== null && ma20[i-1] !== null && ma50[i-1] !== null) {
-            const prevDiff = ma20[i-1] - ma50[i-1];
-            const currDiff = ma20[i] - ma50[i];
-            
-            if (prevDiff < 0 && currDiff >= 0) {
-                // Golden Cross (Bullish Crossover)
-                pointRadii.push(7);
-                pointHoverRadii.push(9);
-                pointBgColors.push('#10b981'); // Emerald green
-                pointBorderColors.push('#ffffff');
-                pointStyles.push('triangle'); // Triangle pointing up
-            } else if (prevDiff > 0 && currDiff <= 0) {
-                // Death Cross (Bearish Crossover)
-                pointRadii.push(7);
-                pointHoverRadii.push(9);
-                pointBgColors.push('#ef4444'); // Red
-                pointBorderColors.push('#ffffff');
-                pointStyles.push('rectRot'); // Diamond
-            } else {
-                pointRadii.push(0);
-                pointHoverRadii.push(5);
-                pointBgColors.push('transparent');
-                pointBorderColors.push('transparent');
-                pointStyles.push('circle');
-            }
+        const spreadVal = spreads[i];
+        if (spreadVal >= data.std2_upper) {
+            // Extreme Overbought
+            pointRadii.push(5);
+            pointHoverRadii.push(7);
+            pointBgColors.push('#ef4444'); // Red
+            pointBorderColors.push('#ffffff');
+            pointStyles.push('circle');
+        } else if (spreadVal <= data.std2_lower) {
+            // Extreme Oversold
+            pointRadii.push(5);
+            pointHoverRadii.push(7);
+            pointBgColors.push('#10b981'); // Green
+            pointBorderColors.push('#ffffff');
+            pointStyles.push('circle');
         } else {
             pointRadii.push(0);
             pointHoverRadii.push(5);
