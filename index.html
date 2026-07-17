@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarketCompass Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script href="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar or Header -->
+        <header class="main-header">
+            <div class="logo">
+                <i class="fa-solid fa-compass-drafting logo-icon"></i>
+                <div class="logo-text">
+                    <h1>MarketCompass</h1>
+                    <span>Dynamic Sector & Sentiment Intelligence</span>
+                </div>
+            </div>
+            <div class="header-meta">
+                <div class="update-indicator">
+                    <span class="pulse-dot"></span>
+                    <span id="last-updated-text">Updating...</span>
+                </div>
+                <button id="refresh-btn" class="action-btn">
+                    <i class="fa-solid fa-rotate"></i> Refresh
+                </button>
+            </div>
+        </header>
+
+        <main class="dashboard-grid">
+            <!-- Fear & Greed Section -->
+            <section class="card glass-card fear-greed-card">
+                <div class="card-header">
+                    <h2>Fear & Greed Index</h2>
+                    <span class="subtext">CNN Business Market Sentiment</span>
+                </div>
+                <div class="card-body fear-greed-body">
+                    <div class="gauge-wrapper">
+                        <div class="gauge-container">
+                            <canvas id="fear-greed-gauge" width="300" height="180"></canvas>
+                            <div class="gauge-value-display">
+                                <span id="fg-score" class="score-num">--</span>
+                                <span id="fg-rating" class="score-label">Neutral</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="fg-history-table">
+                        <div class="history-row header-row">
+                            <span>Period</span>
+                            <span>Value</span>
+                        </div>
+                        <div class="history-row">
+                            <span>Previous Close</span>
+                            <span id="fg-prev-close" class="val-num">--</span>
+                        </div>
+                        <div class="history-row">
+                            <span>1 Week Ago</span>
+                            <span id="fg-1w-ago" class="val-num">--</span>
+                        </div>
+                        <div class="history-row">
+                            <span>1 Month Ago</span>
+                            <span id="fg-1m-ago" class="val-num">--</span>
+                        </div>
+                        <div class="history-row">
+                            <span>1 Year Ago</span>
+                            <span id="fg-1y-ago" class="val-num">--</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Relative Strength Section -->
+            <section class="card glass-card relative-strength-card">
+                <div class="card-header">
+                    <div class="header-main">
+                        <h2>Sectors Strength Compare to SPY</h2>
+                        <span class="subtext">60-Day Relative Strength (Sector Price / SPY Price, Normalized to 100)</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="charts-grid" id="charts-grid-container">
+                        <!-- Chart cards generated dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Leaderboard Section -->
+            <section class="card glass-card leaderboard-card">
+                <div class="card-header leaderboard-header-flex">
+                    <div>
+                        <h2>U.S. ETF Sector Leaderboard</h2>
+                        <span class="subtext">Current rankings, returns, and top holdings</span>
+                    </div>
+                    <div class="search-filter-container">
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="leaderboard-search" placeholder="Search tickers, sectors, holdings...">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="leaderboard-table" id="sector-table">
+                        <thead>
+                            <tr>
+                                <th data-sort="ticker">Ticker <i class="fa-solid fa-sort"></i></th>
+                                <th data-sort="description">Description <i class="fa-solid fa-sort"></i></th>
+                                <th data-sort="price">Price <i class="fa-solid fa-sort"></i></th>
+                                <th data-sort="dy">DY% <i class="fa-solid fa-sort"></i></th>
+                                <th data-sort="wk" class="sorted-desc">WK% <i class="fa-solid fa-sort"></i></th>
+                                <th data-sort="mo">MO% <i class="fa-solid fa-sort"></i></th>
+                                <th data-sort="yr">1Y% <i class="fa-solid fa-sort"></i></th>
+                                <th data-sort="vol">Vol <i class="fa-solid fa-sort"></i></th>
+                                <th>Top Holdings</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-tbody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
