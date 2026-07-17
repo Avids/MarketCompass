@@ -41,6 +41,47 @@ def fetch_fear_and_greed():
             "one_year_ago": 60
         }
 
+def fetch_ma_spread(tickers=("QQQ", "SPY"), ma_period=50, lookback_days=252):
+    """
+    Computes the % spread of price vs its N-day moving average, over the
+    trailing `lookback_days`, plus 1/2 std-dev bands of that spread series.
+    Mirrors the classic 'Overbought/Oversold vs 50-DMA' breadth chart.
+    """
+    result = {}
+    # Need extra history before the window starts so the MA is valid on day 1
+    period_days = lookback_days + ma_period + 20
+
+    for ticker in tickers:
+        try:
+            hist = yf.Ticker(ticker).history(period=f"{period_days}d")
+            if hist.empty or len(hist) < ma_period + 5:
+                print(f"Not enough history for {ticker} MA spread")
+                continue
+
+            close = hist["Close"]
+            sma = close.rolling(window=ma_period).mean()
+            spread = ((close - sma) / sma * 100).dropna()
+
+            # Trim to the requested trailing window (trading days)
+            spread = spread.tail(lookback_days)
+
+            mean = float(spread.mean())
+            std = float(spread.std())
+
+            result[ticker] = {
+                "dates": [d.strftime("%Y-%m-%d") for d in spread.index],
+                "values": [round(v, 3) for v in spread.tolist()],
+                "mean": round(mean, 3),
+                "std1_upper": round(mean + std, 3),
+                "std1_lower": round(mean - std, 3),
+                "std2_upper": round(mean + 2 * std, 3),
+                "std2_lower": round(mean - 2 * std, 3)
+            }
+        except Exception as e:
+            print(f"Error computing MA spread for {ticker}: {e}")
+
+    return result
+
 def fetch_market_data():
     sectors = {
         # Sectors & Thematic (from Leaderboard)
@@ -301,11 +342,13 @@ def main():
     print("Collecting dashboard data...")
     fg_data = fetch_fear_and_greed()
     market_data = fetch_market_data()
+    ma_spread_data = fetch_ma_spread()
     
     output = {
         "fear_greed": fg_data,
         "relative_strength": market_data["relative_strength"],
         "leaderboard": market_data["leaderboard"],
+        "ma_spread": ma_spread_data,
         "last_updated": datetime.now().isoformat()
     }
     

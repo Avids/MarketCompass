@@ -1,3 +1,9 @@
+.ma-spread-chart-wrapper {
+    position: relative;
+    height: 380px;
+    width: 100%;
+}
+
 :root {
     --bg-dark: #0a0e17;
     --card-bg: rgba(16, 22, 35, 0.65);

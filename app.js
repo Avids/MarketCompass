@@ -3,6 +3,8 @@ let fullData = null;
 let charts = {};
 let currentSortColumn = 'wk';
 let currentSortOrder = 'desc';
+let currentMaSpreadTicker = 'QQQ';
+let maSpreadChart = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
@@ -77,6 +79,7 @@ async function loadData() {
         renderFearGreed(fullData.fear_greed);
         renderCharts(fullData.relative_strength);
         renderLeaderboard();
+        renderMaSpread(fullData.ma_spread);
     } catch (error) {
         console.error('Error fetching dashboard data:', error);
         document.getElementById('last-updated-text').textContent = 'Error loading data';
@@ -420,6 +423,125 @@ function renderCharts(relStrengthData) {
                 }
             });
         }, 50);
+    });
+}
+
+// Render the 50-Day MA Spread (overbought/oversold) breadth-style chart
+function renderMaSpread(maSpreadData) {
+    if (!maSpreadData || !Object.keys(maSpreadData).length) return;
+
+    // Build ticker toggle buttons once (or if the ticker set changed)
+    const selector = document.getElementById('ma-spread-ticker-selector');
+    const availableTickers = Object.keys(maSpreadData);
+    if (!availableTickers.includes(currentMaSpreadTicker)) {
+        currentMaSpreadTicker = availableTickers[0];
+    }
+    selector.innerHTML = '';
+    availableTickers.forEach(ticker => {
+        const btn = document.createElement('button');
+        btn.className = 'toggle-btn' + (ticker === currentMaSpreadTicker ? ' active' : '');
+        btn.textContent = ticker;
+        btn.addEventListener('click', () => {
+            if (currentMaSpreadTicker !== ticker) {
+                currentMaSpreadTicker = ticker;
+                selector.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                drawMaSpreadChart(maSpreadData[currentMaSpreadTicker]);
+            }
+        });
+        selector.appendChild(btn);
+    });
+
+    drawMaSpreadChart(maSpreadData[currentMaSpreadTicker]);
+}
+
+function drawMaSpreadChart(item) {
+    if (!item || !item.values || !item.values.length) return;
+
+    const ctx = document.getElementById('ma-spread-chart').getContext('2d');
+    if (maSpreadChart) {
+        maSpreadChart.destroy();
+    }
+
+    // Chart-area-relative background bands: Extreme Overbought / Overbought /
+    // Oversold / Extreme Oversold, drawn behind the line using the live y-scale.
+    const bandPlugin = {
+        id: 'maSpreadBands',
+        beforeDraw(chart) {
+            const { ctx, chartArea, scales: { y } } = chart;
+            if (!chartArea) return;
+
+            const bands = [
+                { from: item.std2_upper, to: y.max, color: 'rgba(220, 38, 38, 0.18)' },   // Extreme Overbought
+                { from: item.std1_upper, to: item.std2_upper, color: 'rgba(239, 68, 68, 0.10)' }, // Overbought
+                { from: item.std1_lower, to: item.std2_lower, color: 'rgba(16, 185, 129, 0.10)' }, // Oversold
+                { from: y.min, to: item.std2_lower, color: 'rgba(16, 185, 129, 0.18)' }    // Extreme Oversold
+            ];
+
+            ctx.save();
+            bands.forEach(band => {
+                const yTop = y.getPixelForValue(Math.max(band.from, band.to));
+                const yBottom = y.getPixelForValue(Math.min(band.from, band.to));
+                ctx.fillStyle = band.color;
+                ctx.fillRect(chartArea.left, yTop, chartArea.right - chartArea.left, yBottom - yTop);
+            });
+            ctx.restore();
+        }
+    };
+
+    const values = item.values;
+    const vMin = Math.min(...values, item.std2_lower);
+    const vMax = Math.max(...values, item.std2_upper);
+    const pad = (vMax - vMin) * 0.08;
+
+    maSpreadChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: item.dates,
+            datasets: [{
+                label: '50-DMA Spread %',
+                data: values,
+                borderColor: '#06b6d4',
+                borderWidth: 1.6,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                pointBackgroundColor: '#06b6d4',
+                fill: false,
+                tension: 0.15
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: '#1f2937',
+                    titleColor: '#9ca3af',
+                    bodyColor: '#f3f4f6',
+                    borderColor: 'rgba(255,255,255,0.08)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: (context) => `Spread: ${context.parsed.y.toFixed(2)}%`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#6b7280', maxTicksLimit: 10 }
+                },
+                y: {
+                    suggestedMin: vMin - pad,
+                    suggestedMax: vMax + pad,
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#6b7280', callback: (v) => `${v}%` }
+                }
+            }
+        },
+        plugins: [bandPlugin]
     });
 }
 

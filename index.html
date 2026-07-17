@@ -100,6 +100,24 @@
                 </div>
             </section>
 
+            <!-- MA Spread / Overbought-Oversold Section -->
+            <section class="card glass-card ma-spread-card">
+                <div class="card-header rs-card-header-flex">
+                    <div class="header-main">
+                        <h2>50-Day Moving Average Spread</h2>
+                        <span class="subtext">Price vs 50-DMA spread, last 12 months — bands at 1/2 std dev</span>
+                    </div>
+                    <div class="duration-selector" id="ma-spread-ticker-selector">
+                        <!-- Ticker toggle buttons generated dynamically -->
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="ma-spread-chart-wrapper">
+                        <canvas id="ma-spread-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+
             <!-- Leaderboard Section -->
             <section class="card glass-card leaderboard-card">
                 <div class="card-header leaderboard-header-flex">
