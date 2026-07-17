@@ -61,6 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
             renderLeaderboard();
         });
     });
+
+    // Setup modal event listeners
+    setupModalListeners();
 });
 
 async function loadData() {
@@ -828,7 +831,7 @@ function drawModalMaSpreadChart(item, ticker) {
 }
 
 // Setup modal event listeners (merge with existing DOMContentLoaded)
-const setupModalListeners = () => {
+function setupModalListeners() {
     // Close modal when clicking close button
     const closeBtn = document.getElementById('modal-close-btn');
     if (closeBtn) {
@@ -895,9 +898,4 @@ const setupModalListeners = () => {
     });
 };
 
-// Call modal setup after DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupModalListeners);
-} else {
-    setupModalListeners();
-}
+// Modal setup is now called from DOMContentLoaded in the main script
