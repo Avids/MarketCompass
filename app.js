@@ -998,15 +998,15 @@ function setupModalListeners() {
                     const label = isRSFullAligned ? '6 Months' : (currentDuration === '50d' ? '50 Days' : '20 Days');
                     const sma = isRSFullAligned ? '10-day' : (currentDuration === '50d' ? '10-day' : '5-day');
                     subtitleText = `Normalized relative strength compared to SPY over ${label} (plotted with ${sma} SMA)`;
-                    legendText = 'Legend: 🟢 Strength | 🔴 Weakness | - - SMA';
+                    legendText = 'Legend: Strength | Weakness | - - SMA';
                 } else if (currentModalView === 'ma-spread') {
                     titleText = `${currentActiveDescription} - 50-Day Moving Average Spread`;
                     subtitleText = `Price vs 50-DMA spread, last 6 months — bands at 1 and 2 standard deviations`;
-                    legendText = 'Legend: 🔴 Extreme Overbought (>= +2 SD) | 🟢 Extreme Oversold (<= -2 SD)';
+                    legendText = 'Legend: Extreme Overbought (>= +2 SD) | Extreme Oversold (<= -2 SD)';
                 } else if (currentModalView === 'price-ma') {
                     titleText = `${currentActiveDescription} - Daily Price & Moving Averages`;
                     subtitleText = `Daily closing price plotted with 20-day and 50-day simple moving averages`;
-                    legendText = 'Legend: 🔴 Extreme Overbought (Spread >= +2 SD) | 🟢 Extreme Oversold (Spread <= -2 SD)';
+                    legendText = 'Legend: Extreme Overbought (Spread >= +2 SD) | Extreme Oversold (Spread <= -2 SD)';
                 }
                 
                 tempCtx.fillText(titleText, 20, 28);
@@ -1155,11 +1155,11 @@ function renderCurrentModalChart() {
         legendEl.innerHTML = `
             <div class="modal-legend-item">
                 <span class="modal-legend-marker" style="background: #ef4444; box-shadow: 0 0 6px #ef4444;"></span>
-                <span>🔴 Extreme Overbought (>= +2 SD)</span>
+                <span>Extreme Overbought (>= +2 SD)</span>
             </div>
             <div class="modal-legend-item">
                 <span class="modal-legend-marker" style="background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
-                <span>🟢 Extreme Oversold (<= -2 SD)</span>
+                <span>Extreme Oversold (<= -2 SD)</span>
             </div>
         `;
         if (modalHistoryData) {
@@ -1169,11 +1169,11 @@ function renderCurrentModalChart() {
         legendEl.innerHTML = `
             <div class="modal-legend-item">
                 <span class="modal-legend-marker" style="background: #ef4444; box-shadow: 0 0 6px #ef4444;"></span>
-                <span>🔴 Extreme Overbought (Spread >= +2 SD)</span>
+                <span>Extreme Overbought (Spread >= +2 SD)</span>
             </div>
             <div class="modal-legend-item">
                 <span class="modal-legend-marker" style="background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
-                <span>🟢 Extreme Oversold (Spread <= -2 SD)</span>
+                <span>Extreme Oversold (Spread <= -2 SD)</span>
             </div>
         `;
         if (modalHistoryData) {
