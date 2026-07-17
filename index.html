@@ -36,122 +36,140 @@
             </div>
         </header>
 
-        <main class="dashboard-grid">
-            <!-- Fear & Greed Section -->
-            <section class="card glass-card fear-greed-card">
-                <div class="card-header fg-card-header-flex">
-                    <div>
-                        <h2>Fear & Greed Index</h2>
-                        <span class="subtext">CNN Business Market Sentiment</span>
-                    </div>
-                    <div class="gauge-value-display">
-                        <span id="fg-score" class="score-num">--</span>
-                        <span id="fg-rating" class="score-label">Neutral</span>
-                    </div>
-                </div>
-                <div class="card-body fear-greed-body">
-                    <div class="gauge-wrapper">
-                        <div class="gauge-container">
-                            <canvas id="fear-greed-gauge" width="300" height="200"></canvas>
-                        </div>
-                    </div>
-                    <div class="fg-history-table">
-                        <div class="history-row header-row">
-                            <span>Period</span>
-                            <span>Value</span>
-                        </div>
-                        <div class="history-row">
-                            <span>Previous Close</span>
-                            <span id="fg-prev-close" class="val-num">--</span>
-                        </div>
-                        <div class="history-row">
-                            <span>1 Week Ago</span>
-                            <span id="fg-1w-ago" class="val-num">--</span>
-                        </div>
-                        <div class="history-row">
-                            <span>1 Month Ago</span>
-                            <span id="fg-1m-ago" class="val-num">--</span>
-                        </div>
-                        <div class="history-row">
-                            <span>1 Year Ago</span>
-                            <span id="fg-1y-ago" class="val-num">--</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <!-- Tabs Navigation -->
+        <div class="tabs-container">
+            <button class="tab-btn active" id="tab-overview" data-tab="overview">
+                <i class="fa-solid fa-chart-line"></i> Overview
+            </button>
+            <button class="tab-btn" id="tab-leaderboard" data-tab="leaderboard">
+                <i class="fa-solid fa-ranking-star"></i> ETF Leaderboard
+            </button>
+        </div>
 
-            <!-- MA Spread / Overbought-Oversold Section -->
-            <section class="card glass-card ma-spread-card">
-                <div class="card-header rs-card-header-flex">
-                    <div class="header-main">
-                        <h2>50-Day Moving Average Spread</h2>
-                        <span class="subtext">Price vs 50-DMA spread, last 12 months — bands at 1/2 std dev</span>
-                    </div>
-                    <div class="duration-selector" id="ma-spread-ticker-selector">
-                        <!-- Ticker toggle buttons generated dynamically -->
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="ma-spread-chart-wrapper">
-                        <canvas id="ma-spread-chart"></canvas>
-                    </div>
-                </div>
-            </section>
+        <main class="dashboard-main">
+            <!-- Overview View -->
+            <div id="view-overview" class="tab-content active">
+                <div class="overview-grid">
+                    <!-- Fear & Greed Section -->
+                    <section class="card glass-card fear-greed-card">
+                        <div class="card-header fg-card-header-flex">
+                            <div>
+                                <h2>Fear & Greed Index</h2>
+                                <span class="subtext">CNN Business Market Sentiment</span>
+                            </div>
+                            <div class="gauge-value-display">
+                                <span id="fg-score" class="score-num">--</span>
+                                <span id="fg-rating" class="score-label">Neutral</span>
+                            </div>
+                        </div>
+                        <div class="card-body fear-greed-body">
+                            <div class="gauge-wrapper">
+                                <div class="gauge-container">
+                                    <canvas id="fear-greed-gauge" width="300" height="200"></canvas>
+                                </div>
+                            </div>
+                            <div class="fg-history-table">
+                                <div class="history-row header-row">
+                                    <span>Period</span>
+                                    <span>Value</span>
+                                </div>
+                                <div class="history-row">
+                                    <span>Previous Close</span>
+                                    <span id="fg-prev-close" class="val-num">--</span>
+                                </div>
+                                <div class="history-row">
+                                    <span>1 Week Ago</span>
+                                    <span id="fg-1w-ago" class="val-num">--</span>
+                                </div>
+                                <div class="history-row">
+                                    <span>1 Month Ago</span>
+                                    <span id="fg-1m-ago" class="val-num">--</span>
+                                </div>
+                                <div class="history-row">
+                                    <span>1 Year Ago</span>
+                                    <span id="fg-1y-ago" class="val-num">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
 
-            <!-- Relative Strength Section -->
-            <section class="card glass-card relative-strength-card">
-                <div class="card-header rs-card-header-flex">
-                    <div class="header-main">
-                        <h2>Sectors Strength Compare to SPY</h2>
-                        <span id="rs-subtext-span" class="subtext">20-Day Relative Strength (Sector Price / SPY Price, Normalized to 100)</span>
-                    </div>
-                    <div class="duration-selector">
-                        <button id="btn-20d" class="toggle-btn active">20 Days</button>
-                        <button id="btn-50d" class="toggle-btn">50 Days</button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="charts-grid" id="charts-grid-container">
-                        <!-- Chart cards generated dynamically -->
-                    </div>
-                </div>
-            </section>
+                    <!-- MA Spread / Overbought-Oversold Section -->
+                    <section class="card glass-card ma-spread-card">
+                        <div class="card-header rs-card-header-flex">
+                            <div class="header-main">
+                                <h2>50-Day Moving Average Spread</h2>
+                                <span class="subtext">Price vs 50-DMA spread, last 12 months — bands at 1/2 std dev</span>
+                            </div>
+                            <div class="duration-selector" id="ma-spread-ticker-selector">
+                                <!-- Ticker toggle buttons generated dynamically -->
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="ma-spread-chart-wrapper">
+                                <canvas id="ma-spread-chart"></canvas>
+                            </div>
+                        </div>
+                    </section>
 
-            <!-- Leaderboard Section -->
-            <section class="card glass-card leaderboard-card">
-                <div class="card-header leaderboard-header-flex">
-                    <div>
-                        <h2>U.S. ETF Sector Leaderboard</h2>
-                        <span class="subtext">Current rankings, returns, and top holdings</span>
-                    </div>
-                    <div class="search-filter-container">
-                        <div class="search-box">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" id="leaderboard-search" placeholder="Search tickers, sectors, holdings...">
+                    <!-- Relative Strength Section -->
+                    <section class="card glass-card relative-strength-card">
+                        <div class="card-header rs-card-header-flex">
+                            <div class="header-main">
+                                <h2>Sectors Strength Compare to SPY</h2>
+                                <span id="rs-subtext-span" class="subtext">20-Day Relative Strength (Sector Price / SPY Price, Normalized to 100)</span>
+                            </div>
+                            <div class="duration-selector">
+                                <button id="btn-20d" class="toggle-btn active">20 Days</button>
+                                <button id="btn-50d" class="toggle-btn">50 Days</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="charts-grid" id="charts-grid-container">
+                                <!-- Chart cards generated dynamically -->
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Leaderboard View -->
+            <div id="view-leaderboard" class="tab-content">
+                <!-- Leaderboard Section -->
+                <section class="card glass-card leaderboard-card">
+                    <div class="card-header leaderboard-header-flex">
+                        <div>
+                            <h2>U.S. ETF Sector Leaderboard</h2>
+                            <span class="subtext">Current rankings, returns, and top holdings</span>
+                        </div>
+                        <div class="search-filter-container">
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="leaderboard-search" placeholder="Search tickers, sectors, holdings...">
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="card-body table-responsive">
-                    <table class="leaderboard-table" id="sector-table">
-                        <thead>
-                            <tr>
-                                <th data-sort="ticker">Ticker <i class="fa-solid fa-sort"></i></th>
-                                <th data-sort="description">Description <i class="fa-solid fa-sort"></i></th>
-                                <th data-sort="price">Price <i class="fa-solid fa-sort"></i></th>
-                                <th data-sort="dy">DY% <i class="fa-solid fa-sort"></i></th>
-                                <th data-sort="wk" class="sorted-desc">WK% <i class="fa-solid fa-sort"></i></th>
-                                <th data-sort="mo">MO% <i class="fa-solid fa-sort"></i></th>
-                                <th data-sort="yr">1Y% <i class="fa-solid fa-sort"></i></th>
-                                <th data-sort="vol">Vol <i class="fa-solid fa-sort"></i></th>
-                                <th>Top Holdings</th>
-                            </tr>
-                        </thead>
-                        <tbody id="leaderboard-tbody">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+                    <div class="card-body table-responsive">
+                        <table class="leaderboard-table" id="sector-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="ticker">Ticker <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="description">Description <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="price">Price <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="dy">DY% <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="wk" class="sorted-desc">WK% <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="mo">MO% <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="yr">1Y% <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="vol">Vol <i class="fa-solid fa-sort"></i></th>
+                                    <th>Top Holdings</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-tbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
         </main>
         <!-- Modal for Sector MA Spread -->
         <div id="sector-modal" class="modal-overlay">

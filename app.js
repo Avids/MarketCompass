@@ -64,6 +64,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup modal event listeners
     setupModalListeners();
+
+    // Tab switching logic
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+
+            // Toggle active class on buttons
+            tabButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Toggle active class on contents
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === `view-${tabId}`) {
+                    content.classList.add('active');
+                }
+            });
+        });
+    });
 });
 
 async function loadData() {
