@@ -41,7 +41,8 @@ async function loadData() {
     refreshBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
 
     try {
-        const response = await fetch('data.json');
+        // Append cache busting parameter to force fresh data load on every load/refresh
+        const response = await fetch(`data.json?t=${new Date().getTime()}`);
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
