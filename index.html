@@ -83,10 +83,14 @@
 
             <!-- Relative Strength Section -->
             <section class="card glass-card relative-strength-card">
-                <div class="card-header">
+                <div class="card-header rs-card-header-flex">
                     <div class="header-main">
                         <h2>Sectors Strength Compare to SPY</h2>
-                        <span class="subtext">60-Day Relative Strength (Sector Price / SPY Price, Normalized to 100)</span>
+                        <span id="rs-subtext-span" class="subtext">20-Day Relative Strength (Sector Price / SPY Price, Normalized to 100)</span>
+                    </div>
+                    <div class="duration-selector">
+                        <button id="btn-20d" class="toggle-btn active">20 Days</button>
+                        <button id="btn-50d" class="toggle-btn">50 Days</button>
                     </div>
                 </div>
                 <div class="card-body">

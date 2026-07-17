@@ -1,7 +1,4 @@
-let fullData = null;
-let charts = {};
-let currentSortColumn = 'wk';
-let currentSortOrder = 'desc';
+let currentDuration = '20d'; // Default active duration ('20d' or '50d')
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
@@ -12,6 +9,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('leaderboard-search').addEventListener('input', (e) => {
         filterAndRenderLeaderboard(e.target.value);
+    });
+
+    // Setup toggle buttons for 20d vs 50d charts
+    const btn20d = document.getElementById('btn-20d');
+    const btn50d = document.getElementById('btn-50d');
+
+    btn20d.addEventListener('click', () => {
+        if (currentDuration !== '20d') {
+            currentDuration = '20d';
+            btn20d.classList.add('active');
+            btn50d.classList.remove('active');
+            document.getElementById('rs-subtext-span').textContent = '20-Day Relative Strength (Sector Price / SPY Price, Normalized to 100)';
+            renderCharts(fullData.relative_strength);
+        }
+    });
+
+    btn50d.addEventListener('click', () => {
+        if (currentDuration !== '50d') {
+            currentDuration = '50d';
+            btn50d.classList.add('active');
+            btn20d.classList.remove('active');
+            document.getElementById('rs-subtext-span').textContent = '50-Day Relative Strength (Sector Price / SPY Price, Normalized to 100)';
+            renderCharts(fullData.relative_strength);
+        }
     });
 
     // Setup table sorting
@@ -245,7 +266,7 @@ function getSentimentColorClass(score) {
     return 'color-extreme-greed';
 }
 
-// Render dynamic 60-day relative strength charts using Chart.js
+// Render dynamic relative strength charts (20d vs 50d) using Chart.js
 function renderCharts(relStrengthData) {
     if (!relStrengthData) return;
 
@@ -254,16 +275,20 @@ function renderCharts(relStrengthData) {
 
     // Dynamically get all keys/tickers present in the dataset to render charts for all sectors
     const chartTickers = Object.keys(relStrengthData);
+    const durationLabel = currentDuration === '20d' ? '20 Days' : '50 Days';
     
     chartTickers.forEach(ticker => {
-        const item = relStrengthData[ticker];
-        if (!item || !item.values || !item.values.length) return;
+        const durationObj = relStrengthData[ticker];
+        if (!durationObj || !durationObj[currentDuration]) return;
+        
+        const item = durationObj[currentDuration];
+        if (!item.values || !item.values.length) return;
 
         // Get ETF full description
         const desc = fullData.leaderboard.find(l => l.ticker === ticker)?.description || "";
         const titleText = desc ? `${ticker} (${desc})` : ticker;
 
-        // Calculate performance from first day of the 60-day series
+        // Calculate performance from first day of the selected duration series
         const lastVal = item.values[item.values.length - 1];
         const pctChange = (lastVal - 100).toFixed(2);
         const sign = pctChange >= 0 ? '+' : '';
@@ -276,7 +301,7 @@ function renderCharts(relStrengthData) {
             <div class="chart-header">
                 <div class="chart-title">
                     <h3>${titleText}</h3>
-                    <span>vs SPY (60 Days)</span>
+                    <span>vs SPY (${durationLabel})</span>
                 </div>
                 <div class="chart-pct ${pctClass}">
                     ${sign}${pctChange}%

@@ -158,23 +158,40 @@ def fetch_market_data():
     if history_data.empty:
         raise ValueError("Could not download historical data from Yahoo Finance.")
         
-    # Get last 60 trading days
-    history_data = history_data.tail(60)
-    
-    # Relative Strength Calculation: Sector Close / SPY Close per day
+    # We will keep the full historical dataset downloaded (90 days) and slice it for 20 and 50 days
     relative_strength = {}
+    
+    # Slice 20 and 50 trading days datasets
+    history_20 = history_data.tail(20)
+    history_50 = history_data.tail(50)
+    
     for ticker in sectors.keys():
         if ticker in history_data:
-            # Ratios
-            ratios = (history_data[ticker] / history_data["SPY"]).dropna()
-            # Normalize to 100 on the first day in the series
-            if not ratios.empty:
-                first_val = ratios.iloc[0]
-                normalized = ((ratios / first_val) * 100).round(2).tolist()
-                dates = [d.strftime("%Y-%m-%d") for d in ratios.index]
-                relative_strength[ticker] = {
-                    "dates": dates,
-                    "values": normalized
+            # 20-Day relative strength series
+            ratios_20 = (history_20[ticker] / history_20["SPY"]).dropna()
+            # 50-Day relative strength series
+            ratios_50 = (history_50[ticker] / history_50["SPY"]).dropna()
+            
+            relative_strength[ticker] = {}
+            
+            # Normalize 20-day series
+            if not ratios_20.empty:
+                first_20 = ratios_20.iloc[0]
+                norm_20 = ((ratios_20 / first_20) * 100).round(2).tolist()
+                dates_20 = [d.strftime("%Y-%m-%d") for d in ratios_20.index]
+                relative_strength[ticker]["20d"] = {
+                    "dates": dates_20,
+                    "values": norm_20
+                }
+                
+            # Normalize 50-day series
+            if not ratios_50.empty:
+                first_50 = ratios_50.iloc[0]
+                norm_50 = ((ratios_50 / first_50) * 100).round(2).tolist()
+                dates_50 = [d.strftime("%Y-%m-%d") for d in ratios_50.index]
+                relative_strength[ticker]["50d"] = {
+                    "dates": dates_50,
+                    "values": norm_50
                 }
 
     # Fetch Leaderboard Details
