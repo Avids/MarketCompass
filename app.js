@@ -361,7 +361,9 @@ function renderCharts(relStrengthData) {
         container.appendChild(card);
 
         // Add click event to open modal with sector MA spread chart
-        card.addEventListener('click', () => {
+        // Stop propagation to prevent triggering parent clicks
+        card.addEventListener('click', (e) => {
+            e.stopPropagation();
             openSectorModal(ticker, desc);
         });
 
@@ -825,8 +827,8 @@ function drawModalMaSpreadChart(item, ticker) {
     });
 }
 
-// Setup modal event listeners
-document.addEventListener('DOMContentLoaded', () => {
+// Setup modal event listeners (merge with existing DOMContentLoaded)
+const setupModalListeners = () => {
     // Close modal when clicking close button
     const closeBtn = document.getElementById('modal-close-btn');
     if (closeBtn) {
@@ -852,4 +854,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-});
+};
+
+// Call modal setup after DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupModalListeners);
+} else {
+    setupModalListeners();
+}
