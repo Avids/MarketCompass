@@ -292,11 +292,37 @@ function renderCharts(relStrengthData) {
         const desc = fullData.leaderboard.find(l => l.ticker === ticker)?.description || "";
         const titleText = desc ? `${ticker} (${desc})` : ticker;
 
+        // Calculate 5-Day Simple Moving Average (SMA) of the relative strength values
+        const values = item.values;
+        const smaValues = [];
+        const smaPeriod = 5;
+        
+        for (let i = 0; i < values.length; i++) {
+            if (i < smaPeriod - 1) {
+                // Not enough data for SMA, default to value itself
+                smaValues.push(values[i]);
+            } else {
+                let sum = 0;
+                for (let j = 0; j < smaPeriod; j++) {
+                    sum += values[i - j];
+                }
+                smaValues.push(Number((sum / smaPeriod).toFixed(2)));
+            }
+        }
+
+        // Determine if current price is above or below SMA for header color styling
+        const currentVal = values[values.length - 1];
+        const currentSma = smaValues[smaValues.length - 1];
+        const isBullish = currentVal >= currentSma;
+        
+        // Price color based on SMA cross status: emerald for above SMA, red for below
+        const priceColor = isBullish ? '#10b981' : '#ef4444';
+        const pctClass = isBullish ? 'pct-positive' : 'pct-negative';
+
         // Calculate performance from first day of the selected duration series
         const lastVal = item.values[item.values.length - 1];
         const pctChange = (lastVal - 100).toFixed(2);
         const sign = pctChange >= 0 ? '+' : '';
-        const pctClass = pctChange >= 0 ? 'pct-positive' : 'pct-negative';
 
         // Create card HTML
         const card = document.createElement('div');
@@ -320,33 +346,44 @@ function renderCharts(relStrengthData) {
         // Render mini sparkline chart
         setTimeout(() => {
             const ctx = document.getElementById(`chart-${ticker}`).getContext('2d');
-            const color = pctChange >= 0 ? '#10b981' : '#ef4444';
             
             // Destroy existing chart if it exists
             if (charts[ticker]) {
                 charts[ticker].destroy();
             }
 
-            // Create gradient
-            const gradient = ctx.createLinearGradient(0, 0, 0, 70);
-            gradient.addColorStop(0, pctChange >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)');
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
             charts[ticker] = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: item.dates,
-                    datasets: [{
-                        data: item.values,
-                        borderColor: color,
-                        borderWidth: 1.8,
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
-                        pointBackgroundColor: color,
-                        fill: true,
-                        backgroundColor: gradient,
-                        tension: 0.25
-                    }]
+                    datasets: [
+                        {
+                            label: '5-Day SMA',
+                            data: smaValues,
+                            borderColor: 'rgba(255, 255, 255, 0.25)',
+                            borderWidth: 1.2,
+                            borderDash: [3, 3],
+                            pointRadius: 0,
+                            fill: false,
+                            tension: 0.25
+                        },
+                        {
+                            label: 'Rel Strength',
+                            data: values,
+                            borderColor: priceColor,
+                            borderWidth: 1.8,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            pointBackgroundColor: priceColor,
+                            // Fill cloud between Rel Strength and 5-Day SMA (dataset index 0)
+                            fill: {
+                                target: 0,
+                                above: 'rgba(16, 185, 129, 0.08)', // Green cloud when price is above SMA
+                                below: 'rgba(239, 68, 68, 0.08)'   // Red cloud when price is below SMA
+                            },
+                            tension: 0.25
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
@@ -366,7 +403,7 @@ function renderCharts(relStrengthData) {
                                     const val = context.parsed.y;
                                     const relativeChange = (val - 100).toFixed(2);
                                     const sign = relativeChange >= 0 ? '+' : '';
-                                    return `Rel Strength: ${sign}${relativeChange}%`;
+                                    return `${context.dataset.label}: ${sign}${relativeChange}%`;
                                 }
                             }
                         }
@@ -375,7 +412,6 @@ function renderCharts(relStrengthData) {
                         x: { display: false },
                         y: { 
                             display: false,
-                            // Baseline standard around 100
                             suggestedMin: 95,
                             suggestedMax: 105
                         }
