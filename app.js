@@ -665,15 +665,15 @@ function renderLeaderboard(query = '') {
         holdingsHtml += '</div>';
 
         tr.innerHTML = `
-            <td><span class="ticker-badge">${item.ticker}</span></td>
-            <td><span class="desc-text">${item.description}</span></td>
-            <td><span class="price-text">$${item.price.toFixed(2)}</span></td>
-            <td><span class="dy-text">${item.dy}</span></td>
-            <td><span class="pct-badge ${wkClass}">${wkSign}${item.wk.toFixed(2)}%</span></td>
-            <td><span class="pct-badge ${moClass}">${moSign}${item.mo.toFixed(2)}%</span></td>
-            <td><span class="pct-badge ${yrClass}">${yrSign}${item.yr.toFixed(2)}%</span></td>
-            <td><span class="vol-text">${item.vol}</span></td>
-            <td>${holdingsHtml}</td>
+            <td data-label="Ticker"><span class="ticker-badge">${item.ticker}</span></td>
+            <td data-label="Description"><span class="desc-text">${item.description}</span></td>
+            <td data-label="Price"><span class="price-text">$${item.price.toFixed(2)}</span></td>
+            <td data-label="DY%"><span class="dy-text">${item.dy}</span></td>
+            <td data-label="WK%"><span class="pct-badge ${wkClass}">${wkSign}${item.wk.toFixed(2)}%</span></td>
+            <td data-label="MO%"><span class="pct-badge ${moClass}">${moSign}${item.mo.toFixed(2)}%</span></td>
+            <td data-label="1Y%"><span class="pct-badge ${yrClass}">${yrSign}${item.yr.toFixed(2)}%</span></td>
+            <td data-label="Vol"><span class="vol-text">${item.vol}</span></td>
+            <td data-label="Holdings">${holdingsHtml}</td>
         `;
         tbody.appendChild(tr);
     });
