@@ -152,25 +152,24 @@
                             </div>
                         </div>
                     </div>
-                    <div class="card-body table-responsive">
-                        <table class="leaderboard-table" id="sector-table">
-                            <thead>
-                                <tr>
-                                    <th data-sort="ticker">Ticker <i class="fa-solid fa-sort"></i></th>
-                                    <th data-sort="description">Description <i class="fa-solid fa-sort"></i></th>
-                                    <th data-sort="price">Price <i class="fa-solid fa-sort"></i></th>
-                                    <th data-sort="dy">DY% <i class="fa-solid fa-sort"></i></th>
-                                    <th data-sort="wk" class="sorted-desc">WK% <i class="fa-solid fa-sort"></i></th>
-                                    <th data-sort="mo">MO% <i class="fa-solid fa-sort"></i></th>
-                                    <th data-sort="yr">1Y% <i class="fa-solid fa-sort"></i></th>
-                                    <th data-sort="vol">Vol <i class="fa-solid fa-sort"></i></th>
-                                    <th>Top Holdings</th>
-                                </tr>
-                            </thead>
-                            <tbody id="leaderboard-tbody">
-                                <!-- Populated dynamically -->
-                            </tbody>
-                        </table>
+                    <div class="card-body">
+                        <div class="leaderboard-grid-cols">
+                            <!-- Left Column: US Related -->
+                            <div class="leaderboard-column-section">
+                                <h3 class="column-group-header us-color">U.S. Related</h3>
+                                <div id="leaderboard-us-groups" class="groups-container">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                            
+                            <!-- Right Column: Global -->
+                            <div class="leaderboard-column-section">
+                                <h3 class="column-group-header global-color">Global</h3>
+                                <div id="leaderboard-global-groups" class="groups-container">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </div>

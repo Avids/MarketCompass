@@ -11,6 +11,58 @@ let currentActiveDescription = 'QQQ';
 let currentModalView = 'relative-strength';
 let modalHistoryData = null;
 
+const etfGroups = {
+    us: [
+        {
+            id: 'us-indices',
+            title: 'Major Indices',
+            tickers: ["SPY", "DIA", "QQQ", "IJH", "IJR", "IWB", "IWM", "IWV"]
+        },
+        {
+            id: 'us-styles',
+            title: 'Style & Dividend',
+            tickers: ["IVW", "IJK", "IJT", "IVE", "IJJ", "IJS", "DVY", "RSP"]
+        },
+        {
+            id: 'us-sectors',
+            title: 'Sectors',
+            tickers: ["XLY", "XLP", "XLE", "XLF", "XLV", "XLI", "XLB", "XLK", "XLC", "XLU", "XLRE"]
+        },
+        {
+            id: 'us-thematics',
+            title: 'Thematics & Industry',
+            tickers: ["IYT", "XRT", "XOP", "SMH", "CIBR", "IGV", "XBI", "XAR", "AIQ", "AIS"]
+        },
+        {
+            id: 'us-crypto-currency',
+            title: 'Currencies & Crypto',
+            tickers: ["FXB", "FXE", "FXY", "GBTC", "ETHE"]
+        }
+    ],
+    global: [
+        {
+            id: 'global-countries',
+            title: 'Country ETFs',
+            tickers: ["EWA", "EWZ", "EWC", "ASHR", "EWQ", "EWG", "EWH", "PIN", "EWI", "EWJ", "EWW", "EWP", "EWU"]
+        },
+        {
+            id: 'global-broad',
+            title: 'Broad International',
+            tickers: ["EFA", "EEM", "IOO", "BKF", "CWI"]
+        },
+        {
+            id: 'global-commodities',
+            title: 'Commodities',
+            tickers: ["DBC", "DBA", "USO", "UNG", "GLD", "SLV"]
+        },
+        {
+            id: 'global-fixed-income',
+            title: 'Fixed Income',
+            tickers: ["SHY", "IEF", "TLT", "AGG", "BND", "TIP"]
+        }
+    ]
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
 
@@ -46,24 +98,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Setup table sorting
-    const tableHeaders = document.querySelectorAll('.leaderboard-table th[data-sort]');
-    tableHeaders.forEach(th => {
-        th.addEventListener('click', () => {
-            const column = th.getAttribute('data-sort');
-            if (currentSortColumn === column) {
-                currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSortColumn = column;
-                currentSortOrder = 'desc'; // Default to desc for new columns
-            }
-
-            // Update UI sorting indicator classes
-            tableHeaders.forEach(h => h.classList.remove('sorted-asc', 'sorted-desc'));
-            th.classList.add(currentSortOrder === 'asc' ? 'sorted-asc' : 'sorted-desc');
-
-            renderLeaderboard();
-        });
+    // Setup table sorting via event delegation
+    document.getElementById('view-leaderboard').addEventListener('click', (e) => {
+        const th = e.target.closest('th[data-sort]');
+        if (!th) return;
+        
+        const column = th.getAttribute('data-sort');
+        if (currentSortColumn === column) {
+            currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSortColumn = column;
+            currentSortOrder = 'desc';
+        }
+        
+        renderLeaderboard(document.getElementById('leaderboard-search').value);
     });
 
     // Setup modal event listeners
@@ -321,30 +369,70 @@ function renderCharts(relStrengthData) {
     const container = document.getElementById('charts-grid-container');
     container.innerHTML = ''; // Clear
 
-    // Dynamically get all keys/tickers present in the dataset to render charts for all sectors
-    const chartTickers = Object.keys(relStrengthData);
     const durationLabel = currentDuration === '20d' ? '20 Days' : '50 Days';
-    
-    chartTickers.forEach(ticker => {
+
+    // Render U.S. Related
+    const usSection = document.createElement('div');
+    usSection.className = 'charts-group-section';
+    usSection.innerHTML = `<h2 class="charts-group-header us-color">U.S. Related</h2>`;
+    let hasUsTickers = false;
+
+    etfGroups.us.forEach(group => {
+        const groupContainer = renderSingleChartGroup(group, relStrengthData, durationLabel);
+        if (groupContainer) {
+            usSection.appendChild(groupContainer);
+            hasUsTickers = true;
+        }
+    });
+    if (hasUsTickers) container.appendChild(usSection);
+
+    // Render Global
+    const globalSection = document.createElement('div');
+    globalSection.className = 'charts-group-section';
+    globalSection.innerHTML = `<h2 class="charts-group-header global-color">Global</h2>`;
+    let hasGlobalTickers = false;
+
+    etfGroups.global.forEach(group => {
+        const groupContainer = renderSingleChartGroup(group, relStrengthData, durationLabel);
+        if (groupContainer) {
+            globalSection.appendChild(groupContainer);
+            hasGlobalTickers = true;
+        }
+    });
+    if (hasGlobalTickers) container.appendChild(globalSection);
+}
+
+function renderSingleChartGroup(group, relStrengthData, durationLabel) {
+    const validTickers = group.tickers.filter(ticker => {
         const durationObj = relStrengthData[ticker];
-        if (!durationObj || !durationObj[currentDuration]) return;
-        
+        return durationObj && durationObj[currentDuration] && durationObj[currentDuration].values && durationObj[currentDuration].values.length > 0;
+    });
+
+    if (validTickers.length === 0) return null;
+
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'charts-group-subcontainer';
+    groupDiv.innerHTML = `<h3 class="charts-group-subheader">${group.title}</h3>`;
+
+    const gridDiv = document.createElement('div');
+    gridDiv.className = 'charts-grid-container';
+    groupDiv.appendChild(gridDiv);
+
+    validTickers.forEach(ticker => {
+        const durationObj = relStrengthData[ticker];
         const item = durationObj[currentDuration];
-        if (!item.values || !item.values.length) return;
+        const values = item.values;
 
         // Get ETF full description
         const desc = fullData.leaderboard.find(l => l.ticker === ticker)?.description || "";
         const titleText = desc ? `${ticker} (${desc})` : ticker;
 
-        // Calculate Simple Moving Average (SMA) of the relative strength values
-        // Dynamic SMA: 5-day for 20d series, 10-day for 50d series
-        const values = item.values;
+        // Calculate Simple Moving Average (SMA)
         const smaValues = [];
         const smaPeriod = currentDuration === '50d' ? 10 : 5;
         
         for (let i = 0; i < values.length; i++) {
             if (i < smaPeriod - 1) {
-                // Not enough data for SMA, default to value itself
                 smaValues.push(values[i]);
             } else {
                 let sum = 0;
@@ -355,21 +443,16 @@ function renderCharts(relStrengthData) {
             }
         }
 
-        // Determine if current price is above or below SMA for header color styling
         const currentVal = values[values.length - 1];
         const currentSma = smaValues[smaValues.length - 1];
         const isBullish = currentVal >= currentSma;
-        
-        // Price color based on SMA cross status: emerald for above SMA, red for below
         const priceColor = isBullish ? '#10b981' : '#ef4444';
         const pctClass = isBullish ? 'pct-positive' : 'pct-negative';
 
-        // Calculate performance from first day of the selected duration series
         const lastVal = item.values[item.values.length - 1];
         const pctChange = (lastVal - 100).toFixed(2);
         const sign = pctChange >= 0 ? '+' : '';
 
-        // Create card HTML with click-to-open modal functionality
         const card = document.createElement('div');
         card.className = 'chart-item-card';
         card.setAttribute('data-ticker', ticker);
@@ -387,20 +470,18 @@ function renderCharts(relStrengthData) {
                 <canvas id="chart-${ticker}"></canvas>
             </div>
         `;
-        container.appendChild(card);
+        gridDiv.appendChild(card);
 
-        // Add click event to open modal with sector MA spread chart
-        // Stop propagation to prevent triggering parent clicks
         card.addEventListener('click', (e) => {
             e.stopPropagation();
             openSectorModal(ticker, titleText);
         });
 
-        // Render mini sparkline chart
         setTimeout(() => {
-            const ctx = document.getElementById(`chart-${ticker}`).getContext('2d');
+            const canvas = document.getElementById(`chart-${ticker}`);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
             
-            // Destroy existing chart if it exists
             if (charts[ticker]) {
                 charts[ticker].destroy();
             }
@@ -428,11 +509,10 @@ function renderCharts(relStrengthData) {
                             pointRadius: 0,
                             pointHoverRadius: 4,
                             pointBackgroundColor: priceColor,
-                            // Fill cloud between Rel Strength and SMA (dataset index 0)
                             fill: {
                                 target: 0,
-                                above: 'rgba(16, 185, 129, 0.08)', // Green cloud when price is above SMA
-                                below: 'rgba(239, 68, 68, 0.08)'   // Red cloud when price is below SMA
+                                above: 'rgba(16, 185, 129, 0.08)',
+                                below: 'rgba(239, 68, 68, 0.08)'
                             },
                             tension: 0.25
                         }
@@ -473,6 +553,8 @@ function renderCharts(relStrengthData) {
             });
         }, 50);
     });
+
+    return groupDiv;
 }
 
 // Render the 50-Day MA Spread (overbought/oversold) breadth-style chart
@@ -613,27 +695,8 @@ function filterAndRenderLeaderboard(query = '') {
     renderLeaderboard(query);
 }
 
-function renderLeaderboard(query = '') {
-    if (!fullData || !fullData.leaderboard) return;
-
-    const tbody = document.getElementById('leaderboard-tbody');
-    tbody.innerHTML = '';
-
-    let items = [...fullData.leaderboard];
-
-    // Filter matching query
-    if (query.trim()) {
-        const q = query.toLowerCase();
-        items = items.filter(item => {
-            const tickerMatch = item.ticker.toLowerCase().includes(q);
-            const descMatch = item.description.toLowerCase().includes(q);
-            const holdingsMatch = item.holdings.some(h => h.ticker.toLowerCase().includes(q));
-            return tickerMatch || descMatch || holdingsMatch;
-        });
-    }
-
-    // Sort items
-    items.sort((a, b) => {
+function sortLeaderboardItems(items) {
+    return items.sort((a, b) => {
         let valA = a[currentSortColumn];
         let valB = b[currentSortColumn];
 
@@ -674,12 +737,87 @@ function renderLeaderboard(query = '') {
             return valA < valB ? 1 : -1;
         }
     });
+}
 
-    // Populate rows
+function renderLeaderboard(query = '') {
+    if (!fullData || !fullData.leaderboard) return;
+
+    const usContainer = document.getElementById('leaderboard-us-groups');
+    const globalContainer = document.getElementById('leaderboard-global-groups');
+    if (!usContainer || !globalContainer) return;
+
+    usContainer.innerHTML = '';
+    globalContainer.innerHTML = '';
+
+    // Render US groups
+    etfGroups.us.forEach(group => {
+        const groupEl = renderSingleLeaderboardGroup(group, query);
+        if (groupEl) usContainer.appendChild(groupEl);
+    });
+
+    // Render Global groups
+    etfGroups.global.forEach(group => {
+        const groupEl = renderSingleLeaderboardGroup(group, query);
+        if (groupEl) globalContainer.appendChild(groupEl);
+    });
+}
+
+function renderSingleLeaderboardGroup(group, query) {
+    // Get items in group
+    let items = fullData.leaderboard.filter(item => group.tickers.includes(item.ticker));
+
+    // Filter matching query
+    if (query.trim()) {
+        const q = query.toLowerCase();
+        items = items.filter(item => {
+            const tickerMatch = item.ticker.toLowerCase().includes(q);
+            const descMatch = item.description.toLowerCase().includes(q);
+            const holdingsMatch = item.holdings && item.holdings.some(h => h.ticker.toLowerCase().includes(q));
+            return tickerMatch || descMatch || holdingsMatch;
+        });
+    }
+
+    if (items.length === 0) return null;
+
+    // Sort items
+    items = sortLeaderboardItems(items);
+
+    // Create group wrapper element
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'leaderboard-group';
+
+    // Headers sorted helper indicator classes
+    const getSortClass = (col) => {
+        if (currentSortColumn !== col) return '';
+        return currentSortOrder === 'asc' ? 'sorted-asc' : 'sorted-desc';
+    };
+
+    groupDiv.innerHTML = `
+        <div class="leaderboard-group-header">${group.title}</div>
+        <div class="table-responsive">
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th data-sort="ticker" class="${getSortClass('ticker')}">ETF <i class="fa-solid fa-sort"></i></th>
+                        <th data-sort="description" class="${getSortClass('description')}">Description <i class="fa-solid fa-sort"></i></th>
+                        <th data-sort="price" class="${getSortClass('price')}">Price <i class="fa-solid fa-sort"></i></th>
+                        <th data-sort="wk" class="${getSortClass('wk')}">WK% <i class="fa-solid fa-sort"></i></th>
+                        <th data-sort="mo" class="${getSortClass('mo')}">MO% <i class="fa-solid fa-sort"></i></th>
+                        <th data-sort="yr" class="${getSortClass('yr')}">1Y% <i class="fa-solid fa-sort"></i></th>
+                        <th>Top Holdings</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    const tbody = groupDiv.querySelector('tbody');
+
     items.forEach(item => {
         const tr = document.createElement('tr');
         
-        // Return badges with classes
         const wkClass = item.wk >= 0 ? 'pct-positive' : 'pct-negative';
         const wkSign = item.wk >= 0 ? '+' : '';
         const moClass = item.mo >= 0 ? 'pct-positive' : 'pct-negative';
@@ -687,33 +825,31 @@ function renderLeaderboard(query = '') {
         const yrClass = item.yr >= 0 ? 'pct-positive' : 'pct-negative';
         const yrSign = item.yr >= 0 ? '+' : '';
 
-        // Generate holdings badges
         let holdingsHtml = '<div class="holdings-pills">';
-        item.holdings.forEach(h => {
-            // Check if holding ticker matches search query to highlight
-            const isMatch = query.trim() && h.ticker.toLowerCase().includes(query.toLowerCase());
-            holdingsHtml += `
-                <div class="holding-pill ${isMatch ? 'highlight-holding' : ''}">
-                    <span class="holding-dot"></span>
-                    <span class="holding-ticker">${h.ticker}</span>
-                    <span class="holding-pct">${h.pct}%</span>
-                </div>
-            `;
-        });
+        if (item.holdings) {
+            item.holdings.forEach(h => {
+                const isMatch = query.trim() && h.ticker.toLowerCase().includes(query.toLowerCase());
+                holdingsHtml += `
+                    <div class="holding-pill ${isMatch ? 'highlight-holding' : ''}">
+                        <span class="holding-dot"></span>
+                        <span class="holding-ticker">${h.ticker}</span>
+                        <span class="holding-pct">${h.pct}%</span>
+                    </div>
+                `;
+            });
+        }
         holdingsHtml += '</div>';
 
         tr.innerHTML = `
-            <td data-label="Ticker"><span class="ticker-badge">${item.ticker}</span></td>
+            <td data-label="ETF"><span class="ticker-badge">${item.ticker}</span></td>
             <td data-label="Description"><span class="desc-text">${item.description}</span></td>
             <td data-label="Price"><span class="price-text">$${item.price.toFixed(2)}</span></td>
-            <td data-label="DY%"><span class="dy-text">${item.dy}</span></td>
             <td data-label="WK%"><span class="pct-badge ${wkClass}">${wkSign}${item.wk.toFixed(2)}%</span></td>
             <td data-label="MO%"><span class="pct-badge ${moClass}">${moSign}${item.mo.toFixed(2)}%</span></td>
             <td data-label="1Y%"><span class="pct-badge ${yrClass}">${yrSign}${item.yr.toFixed(2)}%</span></td>
-            <td data-label="Vol"><span class="vol-text">${item.vol}</span></td>
             <td data-label="Holdings">${holdingsHtml}</td>
         `;
-        
+
         const badge = tr.querySelector('.ticker-badge');
         badge.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -723,6 +859,8 @@ function renderLeaderboard(query = '') {
 
         tbody.appendChild(tr);
     });
+
+    return groupDiv;
 }
 
 // Modal functions for sector MA spread chart
