@@ -194,35 +194,6 @@
         </div>
     </div>
     
-    <!-- ETF Detail Modal -->
-    <div id="etf-modal" class="modal-overlay">
-        <div class="modal-content glass-card">
-            <button class="modal-close-btn" id="etf-modal-close-btn" aria-label="Close modal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <div class="modal-header">
-                <div class="modal-title-container">
-                    <span class="ticker-badge" id="modal-ticker">---</span>
-                    <h2 id="modal-title">Sector Name</h2>
-                </div>
-                <div class="modal-meta">
-                    <span class="subtext" id="modal-subtitle">50-Day Moving Average (50DMA) Price Chart</span>
-                </div>
-            </div>
-            <div class="modal-body">
-                <div id="modal-loading" class="modal-loading-indicator">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Loading historical data...
-                </div>
-                <div id="modal-error" class="modal-error-message" style="display: none;">
-                    <i class="fa-solid fa-circle-exclamation"></i> Error loading historical data. Please try again.
-                </div>
-                <div class="modal-chart-container" id="modal-chart-wrapper" style="display: none;">
-                    <canvas id="modal-dma-chart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="app.js"></script>
+    <script src="app.js?v=2.0.0"></script>
 </body>
 </html>
