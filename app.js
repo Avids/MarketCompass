@@ -1607,7 +1607,7 @@ function drawModalPriceMaChart(data, ticker) {
 
 // ── Custom Ticker Tab ──────────────────────────────────────────────────────────
 
-let customCharts = { rs: null, spread: null, price: null, rsi: null };
+let customCharts = { rs: null, spread: null, price: null, rsi: null, volume: null };
 let currentCustomTicker = null;
 let currentCustomTickerData = null;
 let customMaMode = '8/21'; // '8/21', '20/50', '13/65', '10/30', '50/150', '50/200'
@@ -1808,7 +1808,7 @@ function renderCustomMetaBar(ticker, data) {
 }
 
 function destroyCustomCharts() {
-    ['rs', 'spread', 'price', 'rsi'].forEach(key => {
+    ['rs', 'spread', 'price', 'rsi', 'volume'].forEach(key => {
         if (customCharts[key]) {
             customCharts[key].destroy();
             customCharts[key] = null;
@@ -1822,6 +1822,7 @@ function renderCustomCharts(ticker, data) {
     renderCustomSpreadChart(ticker, data);
     renderCustomPriceChart(ticker, data);
     renderCustomRsiChart(ticker, data);
+    renderCustomVolumeChart(ticker, data);
 }
 
 // Chart 1: Relative Strength vs SPY — line chart with segment coloring
@@ -2341,6 +2342,7 @@ async function copyChartImage(canvasId, chartTitle) {
         else if (canvasId === 'custom-spread-chart') chart = customCharts.spread;
         else if (canvasId === 'custom-price-chart') chart = customCharts.price;
         else if (canvasId === 'custom-rsi-chart') chart = customCharts.rsi;
+        else if (canvasId === 'custom-volume-chart') chart = customCharts.volume;
         
         if (!chart) return;
         
@@ -2401,6 +2403,8 @@ async function copyChartImage(canvasId, chartTitle) {
             subtitleText = `Normalized relative strength vs SPY (baseline 100)`;
         } else if (canvasId === 'custom-spread-chart') {
             subtitleText = `Deviation from moving average with standard deviation bands`;
+        } else if (canvasId === 'custom-volume-chart') {
+            subtitleText = `Volume analysis showing accumulation and distribution bars`;
         }
         
         tempCtx.fillText(titleText, 20, 28);
@@ -2474,5 +2478,105 @@ async function copyChartImage(canvasId, chartTitle) {
         console.error('Failed to copy chart:', err);
         alert('Failed to copy chart. Please try taking a screenshot instead.');
     }
+}
+
+function renderCustomVolumeChart(ticker, data) {
+    const canvas = document.getElementById('custom-volume-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const vols = data.volumes;
+    if (!vols || !vols.length) {
+        document.getElementById('custom-volume-legend').innerHTML = '<span style="color:#6b7280;font-size:0.8rem;">Volume data not available</span>';
+        return;
+    }
+
+    const dates = data.dates;
+    const prices = data.prices;
+    
+    // 1. Calculate 20-period volume SMA (average volume line)
+    const volSmaPeriod = 20;
+    const volSma = vols.map((_, i) => {
+        if (i < volSmaPeriod - 1) return null;
+        const slice = vols.slice(i - volSmaPeriod + 1, i + 1);
+        return slice.reduce((a, b) => a + b, 0) / volSmaPeriod;
+    });
+
+    // 2. Classify volume bars
+    // Accumulation: Price goes UP (or equals) AND volume is above average
+    // Distribution: Price goes DOWN AND volume is above average
+    // Normal: Volume is below average (rendered in semi-transparent gray)
+    const barColors = [];
+    for (let i = 0; i < vols.length; i++) {
+        const v = vols[i];
+        const avg = volSma[i];
+        const isAboveAvg = avg !== null && v > avg;
+        
+        // Find if price went up or down compared to previous day
+        const priceChange = i > 0 ? (prices[i] - prices[i-1]) : 0;
+        
+        if (isAboveAvg) {
+            if (priceChange >= 0) {
+                barColors.push('rgba(16, 185, 129, 0.85)'); // Emerald Green (Accumulation)
+            } else {
+                barColors.push('rgba(239, 68, 68, 0.85)');  // Coral Red (Distribution)
+            }
+        } else {
+            // Normal volume (muted color)
+            barColors.push('rgba(107, 114, 128, 0.3)');     // Gray-500 muted
+        }
+    }
+
+    // Legend
+    document.getElementById('custom-volume-legend').innerHTML = `
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:rgba(16, 185, 129, 0.85)"></span>Accumulation</div>
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:rgba(239, 68, 68, 0.85)"></span>Distribution</div>
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:rgba(107, 114, 128, 0.3)"></span>Normal Volume</div>
+        <div class="custom-legend-item"><span style="display:inline-block;width:14px;height:1px;border-top:1px dashed #f59e0b;margin-bottom:2px;"></span>&nbsp;Average Vol (20)</div>`;
+
+    if (customCharts.volume) {
+        customCharts.volume.destroy();
+    }
+
+    customCharts.volume = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dates,
+            datasets: [
+                {
+                    label: 'Volume',
+                    data: vols,
+                    backgroundColor: barColors,
+                    borderColor: 'transparent',
+                    borderWidth: 0,
+                    order: 2
+                },
+                {
+                    label: 'Average Volume (20)',
+                    data: volSma,
+                    type: 'line',
+                    borderColor: '#f59e0b',
+                    borderWidth: 1.2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.15,
+                    order: 1
+                }
+            ]
+        },
+        options: customChartOptions({
+            yLabel: v => {
+                if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`;
+                if (v >= 1000) return `${(v / 1000).toFixed(0)}K`;
+                return v;
+            },
+            tooltipLabel: (ctx) => {
+                const val = ctx.parsed.y;
+                if (val === null || val === undefined) return `${ctx.dataset.label}: N/A`;
+                return `${ctx.dataset.label}: ${val.toLocaleString()}`;
+            }
+        })
+    });
 }
 

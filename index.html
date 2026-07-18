@@ -319,6 +319,27 @@
                                 </div>
                             </div>
                         </section>
+
+                        <!-- Chart 5: Volume Analysis -->
+                        <section class="card glass-card custom-chart-card">
+                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <h2>Volume Analysis<span class="info-tooltip-container"><i class="fa-solid fa-circle-question"></i><span class="info-tooltip-text"><strong>Volume Spread & VSA Guide:</strong><br>• <strong>Accumulation (Emerald):</strong> Green bar closing up on above-average volume. Indicates institutions are accumulating shares.<br>• <strong>Distribution (Coral):</strong> Red bar closing down on above-average volume. Indicates institutional selling/distribution.<br>• <strong>Average Vol Line:</strong> 20-period volume SMA to identify above-average action.</span></span></h2>
+                                    <span class="subtext">Identifies institutional accumulation and distribution volume activity</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <button class="action-btn" onclick="copyChartImage('custom-volume-chart', 'Volume Analysis')" style="font-size: 0.75rem; padding: 6px 12px; display: flex; align-items: center; gap: 6px;" title="Copy chart to clipboard">
+                                        <i class="fa-regular fa-copy"></i> Copy
+                                    </button>
+                                    <div class="custom-chart-legend" id="custom-volume-legend"></div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="ma-spread-chart-wrapper">
+                                    <canvas id="custom-volume-chart"></canvas>
+                                </div>
+                            </div>
+                        </section>
                     </div>
             </div>
         </main>

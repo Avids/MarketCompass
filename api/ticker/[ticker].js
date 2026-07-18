@@ -85,12 +85,14 @@ export default async function handler(req, res) {
     const alignedDates  = [];
     const alignedCloses = [];
     const alignedSpy    = [];
+    const alignedVols   = [];
 
     tickerSeries.dates.forEach((d, i) => {
         if (spyByDate[d] !== undefined) {
             alignedDates.push(d);
             alignedCloses.push(tickerSeries.closes[i]);
             alignedSpy.push(spyByDate[d]);
+            alignedVols.push(tickerSeries.volumes ? tickerSeries.volumes[i] : 0);
         }
     });
 
@@ -101,7 +103,7 @@ export default async function handler(req, res) {
     }
 
     // Build chart data (126-day lookback)
-    const chartData = buildTickerData(alignedDates, alignedCloses, alignedSpy, 126, timeframe);
+    const chartData = buildTickerData(alignedDates, alignedCloses, alignedSpy, 126, timeframe, alignedVols);
     chartData.ticker = ticker;
 
     // ── 3. Enrich with company profile from FMP ─────────────────────────────────
