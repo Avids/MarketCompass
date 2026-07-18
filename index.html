@@ -114,6 +114,25 @@
                                 </div>
                             </div>
                         </section>
+
+                        <!-- Market Credit Risk (High Yield OAS) Section -->
+                        <section class="card glass-card high-yield-card" style="margin-top: 20px;">
+                            <div class="card-header fg-card-header-flex" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h2>Market Credit Risk (High Yield OAS)<span class="info-tooltip-container"><i class="fa-solid fa-circle-question"></i><span class="info-tooltip-text"><strong>Credit Market Health Guide:</strong><br>• <strong>Low Risk (&lt; 3.50%):</strong> Emerald Green. Healthy credit environment, highly favorable for swing longs.<br>• <strong>Elevated Risk (3.50% - 5.00%):</strong> Amber. Rising macro stress, use smaller positions.<br>• <strong>High Risk (&gt; 5.00%):</strong> Coral Red. Extreme systemic stress, avoid longs or raise cash.</span></span></h2>
+                                    <span class="subtext">ICE BofA US High Yield Index Option-Adjusted Spread (FRED: BAMLH0A0HYM2)</span>
+                                </div>
+                                <div class="gauge-value-display" style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
+                                    <span id="hy-last-value" class="score-num" style="font-size: 1.5rem; font-weight: 700;">--%</span>
+                                    <span id="hy-risk-rating" class="score-label" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;">--</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="ma-spread-chart-wrapper" style="height: 220px;">
+                                    <canvas id="hy-spread-chart"></canvas>
+                                </div>
+                            </div>
+                        </section>
                     </div>
 
                     <div class="overview-right-col">

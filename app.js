@@ -5,6 +5,7 @@ let currentSortColumn = 'wk';
 let currentSortOrder = 'desc';
 let currentMaSpreadTicker = 'SPY';
 let maSpreadChart = null;
+let hyChart = null;
 let modalMaSpreadChart = null;
 let currentActiveTicker = 'QQQ';
 let currentActiveDescription = 'QQQ';
@@ -178,6 +179,7 @@ async function loadData() {
         renderCharts(fullData.relative_strength);
         renderLeaderboard();
         renderMaSpread(fullData.ma_spread);
+        renderHighYieldSpread(fullData.hy_spread);
         renderRecentTickerChips();
     } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -605,6 +607,131 @@ function renderMaSpread(maSpreadData) {
     });
 
     drawMaSpreadChart(maSpreadData[currentMaSpreadTicker]);
+}
+
+function renderHighYieldSpread(hyData) {
+    if (!hyData || !hyData.dates || !hyData.dates.length) {
+        document.getElementById('hy-last-value').textContent = '--%';
+        document.getElementById('hy-risk-rating').textContent = 'N/A';
+        return;
+    }
+
+    const { dates, values, last_value } = hyData;
+    
+    // Update UI elements
+    const lastVal = last_value !== undefined ? last_value : values[values.length - 1];
+    document.getElementById('hy-last-value').textContent = `${lastVal.toFixed(2)}%`;
+    
+    const ratingEl = document.getElementById('hy-risk-rating');
+    if (lastVal < 3.50) {
+        ratingEl.textContent = 'LOW RISK';
+        ratingEl.style.color = '#10b981'; // Emerald Green
+        ratingEl.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+    } else if (lastVal <= 5.00) {
+        ratingEl.textContent = 'ELEVATED RISK';
+        ratingEl.style.color = '#f59e0b'; // Amber/Orange
+        ratingEl.style.backgroundColor = 'rgba(245, 158, 11, 0.1)';
+    } else {
+        ratingEl.textContent = 'HIGH RISK';
+        ratingEl.style.color = '#ef4444'; // Coral Red
+        ratingEl.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+    }
+
+    const canvas = document.getElementById('hy-spread-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    if (hyChart) {
+        hyChart.destroy();
+    }
+
+    // Chart-area-relative background bands for Credit Risk regimes
+    const bandPlugin = {
+        id: 'hySpreadBands',
+        beforeDraw(chart) {
+            const { ctx, chartArea, scales: { y } } = chart;
+            if (!chartArea) return;
+
+            const bands = [
+                { from: 5.00, to: y.max, color: 'rgba(239, 68, 68, 0.12)' },    // High Risk (Red)
+                { from: 3.50, to: 5.00, color: 'rgba(245, 158, 11, 0.08)' },   // Elevated Risk (Amber)
+                { from: y.min, to: 3.50, color: 'rgba(16, 185, 129, 0.08)' }    // Low Risk (Green)
+            ];
+
+            ctx.save();
+            bands.forEach(band => {
+                const yTop = y.getPixelForValue(Math.max(band.from, band.to));
+                const yBottom = y.getPixelForValue(Math.min(band.from, band.to));
+                ctx.fillStyle = band.color;
+                ctx.fillRect(chartArea.left, yTop, chartArea.right - chartArea.left, yBottom - yTop);
+            });
+            ctx.restore();
+        }
+    };
+
+    const vMin = Math.min(...values);
+    const vMax = Math.max(...values);
+    const pad = (vMax - vMin) * 0.08;
+
+    hyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'High Yield OAS %',
+                data: values,
+                borderColor: '#a855f7', // Purple
+                borderWidth: 1.6,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                pointBackgroundColor: '#a855f7',
+                fill: false,
+                tension: 0.15
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.03)'
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        font: { size: 9 },
+                        maxTicksLimit: 8
+                    }
+                },
+                y: {
+                    min: Math.max(0, vMin - pad),
+                    max: vMax + pad,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.03)'
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        font: { size: 9 },
+                        callback: v => `${v.toFixed(1)}%`
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(10, 15, 29, 0.95)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#e5e7eb',
+                    borderColor: 'rgba(255, 255, 255, 0.08)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: ctx => `Yield Spread: ${ctx.parsed.y.toFixed(2)}%`
+                    }
+                }
+            }
+        },
+        plugins: [bandPlugin]
+    });
 }
 
 function drawMaSpreadChart(item) {

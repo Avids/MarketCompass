@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import time
+import urllib
 import urllib.request
 import pandas as pd
 import yfinance as yf
@@ -66,6 +67,32 @@ def fetch_fear_and_greed():
             "one_month_ago": 52,
             "one_year_ago": 60
         }
+
+def fetch_high_yield_spread(lookback_days=252):
+    """
+    Fetches the ICE BofA US High Yield Index Option-Adjusted Spread (OAS)
+    from FRED and returns dates and values trimmed to lookback_days.
+    """
+    print("Fetching ICE BofA High Yield OAS from FRED...")
+    url = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLH0A0HYM2"
+    try:
+        df = pd.read_csv(url)
+        df = df[df["BAMLH0A0HYM2"] != "."]
+        df["BAMLH0A0HYM2"] = df["BAMLH0A0HYM2"].astype(float)
+        df = df.dropna(subset=["BAMLH0A0HYM2"])
+        
+        df_trimmed = df.tail(lookback_days)
+        dates = df_trimmed["observation_date"].tolist()
+        values = df_trimmed["BAMLH0A0HYM2"].tolist()
+        
+        return {
+            "dates": dates,
+            "values": values,
+            "last_value": values[-1] if values else None
+        }
+    except Exception as e:
+        print(f"Error fetching High Yield Spread: {e}")
+        return None
 
 def fetch_ma_spread(tickers=("QQQ", "SPY"), ma_period=50, lookback_days=252, force=False):
     """
@@ -455,6 +482,9 @@ def fetch_custom_ticker(ticker, force=False):
 
 def main(force=False):
     print("Collecting dashboard data...")
+    # Fetch ICE BofA High Yield OAS first before yfinance network traffic / port pool usage
+    hy_data = fetch_high_yield_spread(lookback_days=252)
+
     fg_data = fetch_fear_and_greed()
     market_data = fetch_market_data(force=force)
     # Get MA spread for SPY and QQQ (shown in the main page card)
@@ -503,6 +533,7 @@ def main(force=False):
         "relative_strength": market_data["relative_strength"],
         "leaderboard": market_data["leaderboard"],
         "ma_spread": ma_spread_data,
+        "hy_spread": hy_data,
         "custom_tickers": custom,
         "last_updated": datetime.now().isoformat()
     }
