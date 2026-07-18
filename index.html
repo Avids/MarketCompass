@@ -256,12 +256,19 @@
 
                         <!-- Chart 3: Price & MAs -->
                         <section class="card glass-card custom-chart-card">
-                            <div class="card-header">
+                            <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
                                 <div>
                                     <h2 id="custom-price-title">Price &amp; Moving Averages</h2>
-                                    <span class="subtext">Price with 20-Day and 50-Day moving averages</span>
+                                    <span class="subtext" id="custom-price-subtext">Price with 8-Day and 21-Day moving averages</span>
                                 </div>
-                                <div class="custom-chart-legend" id="custom-price-legend"></div>
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <!-- MA Selector Toggle Buttons -->
+                                    <div class="toggle-container" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 2px; display: flex; gap: 2px;">
+                                        <button id="custom-ma-8-21-btn" class="tab-btn active" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;">8/21 DMA</button>
+                                        <button id="custom-ma-20-80-btn" class="tab-btn" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;">20/80 DMA</button>
+                                    </div>
+                                    <div class="custom-chart-legend" id="custom-price-legend"></div>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="ma-spread-chart-wrapper">
@@ -269,8 +276,23 @@
                                 </div>
                             </div>
                         </section>
+
+                        <!-- Chart 4: RSI (14) -->
+                        <section class="card glass-card custom-chart-card">
+                            <div class="card-header">
+                                <div>
+                                    <h2>Relative Strength Index (RSI 14)</h2>
+                                    <span class="subtext">Momentum oscillator measuring velocity/magnitude of price changes</span>
+                                </div>
+                                <div class="custom-chart-legend" id="custom-rsi-legend"></div>
+                            </div>
+                            <div class="card-body">
+                                <div class="ma-spread-chart-wrapper">
+                                    <canvas id="custom-rsi-chart"></canvas>
+                                </div>
+                            </div>
+                        </section>
                     </div>
-                </div>
             </div>
         </main>
         <!-- Modal for Sector MA Spread -->

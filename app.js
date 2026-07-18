@@ -1607,8 +1607,10 @@ function drawModalPriceMaChart(data, ticker) {
 
 // ── Custom Ticker Tab ──────────────────────────────────────────────────────────
 
-let customCharts = { rs: null, spread: null, price: null };
+let customCharts = { rs: null, spread: null, price: null, rsi: null };
 let currentCustomTicker = null;
+let currentCustomTickerData = null;
+let customMaMode = '8/21'; // '8/21' or '20/80'
 
 function setupCustomTickerListeners() {
     const loadBtn = document.getElementById('custom-ticker-load-btn');
@@ -1625,6 +1627,36 @@ function setupCustomTickerListeners() {
             if (ticker) loadCustomTickerData(ticker);
         }
     });
+
+    // MA Mode toggles
+    const ma821Btn = document.getElementById('custom-ma-8-21-btn');
+    const ma2080Btn = document.getElementById('custom-ma-20-80-btn');
+
+    if (ma821Btn && ma2080Btn) {
+        ma821Btn.addEventListener('click', () => {
+            if (customMaMode !== '8/21') {
+                customMaMode = '8/21';
+                ma821Btn.classList.add('active');
+                ma2080Btn.classList.remove('active');
+                document.getElementById('custom-price-subtext').textContent = 'Price with 8-Day and 21-Day moving averages';
+                if (currentCustomTickerData) {
+                    renderCustomPriceChart(currentCustomTicker, currentCustomTickerData);
+                }
+            }
+        });
+
+        ma2080Btn.addEventListener('click', () => {
+            if (customMaMode !== '20/80') {
+                customMaMode = '20/80';
+                ma2080Btn.classList.add('active');
+                ma821Btn.classList.remove('active');
+                document.getElementById('custom-price-subtext').textContent = 'Price with 20-Day and 80-Day moving averages';
+                if (currentCustomTickerData) {
+                    renderCustomPriceChart(currentCustomTicker, currentCustomTickerData);
+                }
+            }
+        });
+    }
 }
 
 function renderCustomTickerChips() {
@@ -1696,6 +1728,7 @@ async function loadCustomTickerData(ticker) {
         }
 
         const data = await resp.json();
+        currentCustomTickerData = data;
 
         // Success — save to recent list and render
         addRecentTicker(ticker);
@@ -1715,6 +1748,7 @@ async function loadCustomTickerData(ticker) {
         document.getElementById('custom-charts-area').style.display = 'flex';
 
     } catch (err) {
+        currentCustomTickerData = null;
         document.getElementById('custom-charts-area').style.display = 'none';
         destroyCustomCharts();
         setCustomStatus('error',
@@ -1729,6 +1763,7 @@ function setCustomStatus(type, title, sub) {
     const iconEl = panel.querySelector('.custom-status-icon i');
     const titleEl = panel.querySelector('.custom-status-title');
     const subEl = panel.querySelector('.custom-status-sub');
+    const cmdBlock = panel.querySelector('.custom-cmd-block');
 
     panel.className = 'custom-status-panel ' + (type === 'error' ? 'error' : type === 'success' ? 'success' : '');
 
@@ -1737,6 +1772,9 @@ function setCustomStatus(type, title, sub) {
 
     titleEl.innerHTML = title;
     subEl.innerHTML = sub;
+
+    // Only show the Python command hint in the initial idle state
+    if (cmdBlock) cmdBlock.style.display = type === 'info' ? 'flex' : 'none';
 }
 
 function renderCustomMetaBar(ticker, data) {
@@ -1767,7 +1805,7 @@ function renderCustomMetaBar(ticker, data) {
 }
 
 function destroyCustomCharts() {
-    ['rs', 'spread', 'price'].forEach(key => {
+    ['rs', 'spread', 'price', 'rsi'].forEach(key => {
         if (customCharts[key]) {
             customCharts[key].destroy();
             customCharts[key] = null;
@@ -1780,9 +1818,10 @@ function renderCustomCharts(ticker, data) {
     renderCustomRSChart(ticker, data);
     renderCustomSpreadChart(ticker, data);
     renderCustomPriceChart(ticker, data);
+    renderCustomRsiChart(ticker, data);
 }
 
-// Chart 1: Relative Strength vs SPY
+// Chart 1: Relative Strength vs SPY — line chart with segment coloring
 function renderCustomRSChart(ticker, data) {
     const canvas = document.getElementById('custom-rs-chart');
     if (!canvas) return;
@@ -1796,8 +1835,9 @@ function renderCustomRSChart(ticker, data) {
 
     const dates = data.dates;
     const values = rs;
+    const n = dates.length;
 
-    // Compute 10-day SMA of relative strength
+    // 10-day SMA
     const smaPeriod = 10;
     const smaValues = values.map((_, i) => {
         if (i < smaPeriod - 1) return null;
@@ -1805,35 +1845,45 @@ function renderCustomRSChart(ticker, data) {
         return slice.reduce((a, b) => a + b, 0) / smaPeriod;
     });
 
-    // Colour segments above/below 100
-    const aboveColors = values.map(v => v >= 100 ? 'rgba(16, 185, 129, 0.85)' : 'rgba(239, 68, 68, 0.85)');
-
-    // Custom legend
     document.getElementById('custom-rs-legend').innerHTML = `
         <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#10b981"></span>Outperforming SPY</div>
         <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ef4444"></span>Underperforming SPY</div>
-        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#9ca3af;border-radius:0;height:2px;width:14px;"></span>10-Day SMA</div>`;
+        <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:1px;background:#9ca3af;margin-bottom:2px;opacity:0.8;"></span>&nbsp;10-Day SMA</div>
+        <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:1px;background:rgba(255,255,255,0.25);margin-bottom:2px;border-top:1px dashed rgba(255,255,255,0.25);"></span>&nbsp;Baseline 100</div>`;
 
     customCharts.rs = new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: dates,
             datasets: [
                 {
                     label: 'Relative Strength',
                     data: values,
-                    backgroundColor: aboveColors,
-                    borderColor: aboveColors,
-                    borderWidth: 0,
-                    barPercentage: 0.85,
-                    categoryPercentage: 0.9,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false,
+                    tension: 0.1,
+                    // Color the line green above 100, red below 100
+                    segment: {
+                        borderColor: ctx => ctx.p0.parsed.y >= 100 ? 'rgba(16,185,129,0.9)' : 'rgba(239,68,68,0.9)',
+                    },
                     order: 2
+                },
+                {
+                    label: 'Baseline (100)',
+                    data: Array(n).fill(100),
+                    borderColor: 'rgba(255,255,255,0.2)',
+                    borderWidth: 1,
+                    borderDash: [5, 4],
+                    pointRadius: 0,
+                    fill: false,
+                    order: 3
                 },
                 {
                     label: '10-Day SMA',
                     data: smaValues,
-                    type: 'line',
-                    borderColor: 'rgba(156, 163, 175, 0.8)',
+                    borderColor: 'rgba(156, 163, 175, 0.75)',
                     borderWidth: 1.5,
                     borderDash: [4, 3],
                     pointRadius: 0,
@@ -1847,14 +1897,15 @@ function renderCustomRSChart(ticker, data) {
             yLabel: v => v.toFixed(1),
             tooltipLabel: (ctx) => {
                 const val = ctx.parsed.y;
-                if (val === null) return `${ctx.dataset.label}: N/A`;
+                if (val === null || val === undefined) return null;
+                if (ctx.dataset.label === 'Baseline (100)') return null;
                 return `${ctx.dataset.label}: ${val.toFixed(2)}`;
             }
         })
     });
 }
 
-// Chart 2: 50-Day MA Spread with std-dev bands
+// Chart 2: 50-Day MA Spread with clear sigma reference lines
 function renderCustomSpreadChart(ticker, data) {
     const canvas = document.getElementById('custom-spread-chart');
     if (!canvas) return;
@@ -1863,32 +1914,32 @@ function renderCustomSpreadChart(ticker, data) {
     if (!data.values || !data.values.length) return;
 
     const { dates, values, mean, std1_upper, std1_lower, std2_upper, std2_lower } = data;
+    const n = dates.length;
 
-    // Colour points by region
+    // Color the main line by zone
     const pointBg = values.map(v => {
         if (v >= std2_upper) return '#ef4444';
         if (v <= std2_lower) return '#10b981';
-        if (v >= std1_upper) return 'rgba(239,68,68,0.5)';
-        if (v <= std1_lower) return 'rgba(16,185,129,0.5)';
-        return 'rgba(6,182,212,0.5)';
+        return 'rgba(6,182,212,0.6)';
     });
-    const pointRadius = values.map(v => (v >= std2_upper || v <= std2_lower) ? 4 : 0);
+    const pointRadius = values.map(v => (v >= std2_upper || v <= std2_lower) ? 5 : 0);
 
-    // Band plugin (same as modal)
+    // Background band plugin
     const bandPlugin = {
         id: 'customSpreadBands',
         beforeDraw(chart) {
             const { ctx: c, chartArea, scales: { y } } = chart;
             if (!chartArea) return;
             const bands = [
-                { from: std2_upper, to: y.max, color: 'rgba(220,38,38,0.18)' },
-                { from: std1_upper, to: std2_upper, color: 'rgba(239,68,68,0.10)' },
-                { from: std1_lower, to: std2_lower, color: 'rgba(16,185,129,0.10)' },
-                { from: y.min, to: std2_lower, color: 'rgba(16,185,129,0.18)' }
+                { from: std2_upper, to: y.max,      color: 'rgba(220,38,38,0.15)' },
+                { from: std1_upper, to: std2_upper,  color: 'rgba(239,68,68,0.08)' },
+                { from: std1_lower, to: std1_upper,  color: 'rgba(255,255,255,0.02)' },
+                { from: std2_lower, to: std1_lower,  color: 'rgba(16,185,129,0.08)' },
+                { from: y.min,      to: std2_lower,  color: 'rgba(16,185,129,0.15)' },
             ];
             c.save();
             bands.forEach(band => {
-                const yTop = y.getPixelForValue(Math.max(band.from, band.to));
+                const yTop    = y.getPixelForValue(Math.max(band.from, band.to));
                 const yBottom = y.getPixelForValue(Math.min(band.from, band.to));
                 c.fillStyle = band.color;
                 c.fillRect(chartArea.left, Math.min(yTop, chartArea.top), chartArea.width, Math.max(yBottom - yTop, 0));
@@ -1898,48 +1949,118 @@ function renderCustomSpreadChart(ticker, data) {
     };
 
     document.getElementById('custom-spread-legend').innerHTML = `
-        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ef4444"></span>Extreme Overbought (&ge;+2 SD)</div>
-        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#10b981"></span>Extreme Oversold (&le;-2 SD)</div>`;
+        <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:2px;background:#ef4444;margin-bottom:2px;"></span>&nbsp;+2σ / −2σ</div>
+        <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:2px;background:rgba(239,68,68,0.55);margin-bottom:2px;"></span>&nbsp;+1σ / −1σ</div>
+        <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:2px;background:rgba(255,255,255,0.3);margin-bottom:2px;border-top:1px dashed rgba(255,255,255,0.3);"></span>&nbsp;Mean</div>
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ef4444"></span>Extreme Overbought</div>
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#10b981"></span>Extreme Oversold</div>`;
 
     customCharts.spread = new Chart(ctx, {
         type: 'line',
         plugins: [bandPlugin],
         data: {
             labels: dates,
-            datasets: [{
-                label: `${ticker} vs 50-DMA (%)`,
-                data: values,
-                borderColor: '#06b6d4',
-                borderWidth: 1.8,
-                pointRadius: pointRadius,
-                pointHoverRadius: 5,
-                pointBackgroundColor: pointBg,
-                pointBorderColor: '#fff',
-                pointBorderWidth: 1.2,
-                fill: false,
-                tension: 0.18
-            }, {
-                label: 'Mean',
-                data: Array(dates.length).fill(mean),
-                borderColor: 'rgba(255,255,255,0.3)',
-                borderWidth: 1,
-                borderDash: [5, 4],
-                pointRadius: 0,
-                fill: false
-            }]
+            datasets: [
+                {
+                    label: `${ticker} vs 50-DMA (%)`,
+                    data: values,
+                    borderColor: '#06b6d4',
+                    borderWidth: 2,
+                    pointRadius: pointRadius,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: pointBg,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 1.5,
+                    fill: false,
+                    tension: 0.18,
+                    order: 1
+                },
+                // Sigma reference lines as explicit datasets
+                {
+                    label: `+2σ (${std2_upper > 0 ? '+' : ''}${std2_upper.toFixed(1)}%)`,
+                    data: Array(n).fill(std2_upper),
+                    borderColor: 'rgba(239,68,68,0.85)',
+                    borderWidth: 1.5,
+                    borderDash: [6, 3],
+                    pointRadius: 0,
+                    fill: false,
+                    order: 2
+                },
+                {
+                    label: `+1σ (${std1_upper > 0 ? '+' : ''}${std1_upper.toFixed(1)}%)`,
+                    data: Array(n).fill(std1_upper),
+                    borderColor: 'rgba(239,68,68,0.45)',
+                    borderWidth: 1,
+                    borderDash: [4, 4],
+                    pointRadius: 0,
+                    fill: false,
+                    order: 3
+                },
+                {
+                    label: `Mean (${mean > 0 ? '+' : ''}${mean.toFixed(1)}%)`,
+                    data: Array(n).fill(mean),
+                    borderColor: 'rgba(255,255,255,0.35)',
+                    borderWidth: 1,
+                    borderDash: [5, 4],
+                    pointRadius: 0,
+                    fill: false,
+                    order: 4
+                },
+                {
+                    label: `−1σ (${std1_lower > 0 ? '+' : ''}${std1_lower.toFixed(1)}%)`,
+                    data: Array(n).fill(std1_lower),
+                    borderColor: 'rgba(16,185,129,0.45)',
+                    borderWidth: 1,
+                    borderDash: [4, 4],
+                    pointRadius: 0,
+                    fill: false,
+                    order: 5
+                },
+                {
+                    label: `−2σ (${std2_lower > 0 ? '+' : ''}${std2_lower.toFixed(1)}%)`,
+                    data: Array(n).fill(std2_lower),
+                    borderColor: 'rgba(16,185,129,0.85)',
+                    borderWidth: 1.5,
+                    borderDash: [6, 3],
+                    pointRadius: 0,
+                    fill: false,
+                    order: 6
+                }
+            ]
         },
-        options: customChartOptions({
-            yLabel: v => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`,
-            tooltipLabel: (ctx) => {
-                const val = ctx.parsed.y;
-                if (val === null) return `${ctx.dataset.label}: N/A`;
-                return `${ctx.dataset.label}: ${val > 0 ? '+' : ''}${val.toFixed(2)}%`;
+        options: {
+            ...customChartOptions({
+                yLabel: v => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`,
+                tooltipLabel: (ctx) => {
+                    const val = ctx.parsed.y;
+                    if (val === null || val === undefined) return null;
+                    // Skip sigma lines from tooltip
+                    if (ctx.datasetIndex > 1) return `${ctx.dataset.label}`;
+                    return `${ctx.dataset.label}: ${val > 0 ? '+' : ''}${val.toFixed(2)}%`;
+                }
+            }),
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1f2937',
+                    titleColor: '#9ca3af',
+                    bodyColor: '#f3f4f6',
+                    borderColor: 'rgba(255,255,255,0.08)',
+                    borderWidth: 1,
+                    filter: item => item.datasetIndex === 0, // Only show main line in tooltip
+                    callbacks: {
+                        label: (ctx) => {
+                            const val = ctx.parsed.y;
+                            return `${ticker} vs 50-DMA: ${val > 0 ? '+' : ''}${val.toFixed(2)}%`;
+                        }
+                    }
+                }
             }
-        })
+        }
     });
 }
 
-// Chart 3: Price & 20/50-Day MAs with OB/OS dots
+// Chart 3: Price & MAs (8/21 or 20/80 with dashlines)
 function renderCustomPriceChart(ticker, data) {
     const canvas = document.getElementById('custom-price-chart');
     if (!canvas) return;
@@ -1947,15 +2068,37 @@ function renderCustomPriceChart(ticker, data) {
 
     if (!data.prices || !data.prices.length) return;
 
-    const { dates, prices, ma20, ma50, values: spreads, std2_upper, std2_lower } = data;
+    // Destructure required arrays
+    const { dates, prices, ma8, ma21, ma20, ma50, ma80, values: spreads, std2_upper, std2_lower } = data;
 
-    // Colour dots on price for OB/OS
+    // Determine fast/slow MA based on customMaMode
+    let fastMa = [];
+    let slowMa = [];
+    let fastLabel = '';
+    let slowLabel = '';
+    let fastColor = '#f59e0b'; // Amber/Orange
+    let slowColor = '#ec4899'; // Pink
+
+    if (customMaMode === '20/80') {
+        fastMa = ma20 || [];
+        slowMa = ma80 || [];
+        fastLabel = '20-Day MA';
+        slowLabel = '80-Day MA';
+    } else {
+        // default 8/21
+        fastMa = ma8 || [];
+        slowMa = ma21 || [];
+        fastLabel = '8-Day MA';
+        slowLabel = '21-Day MA';
+    }
+
+    // Overbought/Oversold dots on the price line (based on 50d spread)
     const dotRadius = prices.map((_, i) => {
-        const s = spreads[i];
+        const s = spreads ? spreads[i] : 0;
         return (s >= std2_upper || s <= std2_lower) ? 5 : 0;
     });
     const dotBg = prices.map((_, i) => {
-        const s = spreads[i];
+        const s = spreads ? spreads[i] : 0;
         if (s >= std2_upper) return '#ef4444';
         if (s <= std2_lower) return '#10b981';
         return 'transparent';
@@ -1963,10 +2106,14 @@ function renderCustomPriceChart(ticker, data) {
 
     document.getElementById('custom-price-legend').innerHTML = `
         <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#06b6d4"></span>Price</div>
-        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#f59e0b"></span>20-Day MA</div>
-        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ec4899"></span>50-Day MA</div>
+        <div class="custom-legend-item"><span style="display:inline-block;width:14px;height:1px;border-top:2px dashed ${fastColor};margin-bottom:2px;"></span>&nbsp;${fastLabel}</div>
+        <div class="custom-legend-item"><span style="display:inline-block;width:14px;height:1px;border-top:2px dashed ${slowColor};margin-bottom:2px;"></span>&nbsp;${slowLabel}</div>
         <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ef4444"></span>Overbought</div>
         <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#10b981"></span>Oversold</div>`;
+
+    if (customCharts.price) {
+        customCharts.price.destroy();
+    }
 
     customCharts.price = new Chart(ctx, {
         type: 'line',
@@ -1984,27 +2131,32 @@ function renderCustomPriceChart(ticker, data) {
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 1.5,
                     fill: false,
-                    tension: 0.15
+                    tension: 0.15,
+                    order: 1
                 },
                 {
-                    label: '20-Day MA',
-                    data: ma20,
-                    borderColor: '#f59e0b',
+                    label: fastLabel,
+                    data: fastMa,
+                    borderColor: fastColor,
                     borderWidth: 1.5,
+                    borderDash: [5, 5], // Dashed line
                     pointRadius: 0,
                     pointHoverRadius: 4,
                     fill: false,
-                    tension: 0.15
+                    tension: 0.15,
+                    order: 2
                 },
                 {
-                    label: '50-Day MA',
-                    data: ma50,
-                    borderColor: '#ec4899',
+                    label: slowLabel,
+                    data: slowMa,
+                    borderColor: slowColor,
                     borderWidth: 1.5,
+                    borderDash: [5, 5], // Dashed line
                     pointRadius: 0,
                     pointHoverRadius: 4,
                     fill: false,
-                    tension: 0.15
+                    tension: 0.15,
+                    order: 3
                 }
             ]
         },
@@ -2016,6 +2168,114 @@ function renderCustomPriceChart(ticker, data) {
                 return `${ctx.dataset.label}: $${val.toFixed(2)}`;
             }
         })
+    });
+}
+
+// Chart 4: RSI (14) Chart with 30/70 shaded bands
+function renderCustomRsiChart(ticker, data) {
+    const canvas = document.getElementById('custom-rsi-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const rsi = data.rsi;
+    if (!rsi || !rsi.length) {
+        document.getElementById('custom-rsi-legend').innerHTML = '<span style="color:#6b7280;font-size:0.8rem;">RSI data not available</span>';
+        return;
+    }
+
+    const dates = data.dates;
+    const n = dates.length;
+
+    // RSI band plugin to fill the 30-70 range
+    const rsiBandPlugin = {
+        id: 'customRsiBands',
+        beforeDraw(chart) {
+            const { ctx: c, chartArea, scales: { y } } = chart;
+            if (!chartArea) return;
+            
+            // Fill 30 to 70 range with subtle glow
+            const y70 = y.getPixelForValue(70);
+            const y30 = y.getPixelForValue(30);
+            c.save();
+            c.fillStyle = 'rgba(255, 255, 255, 0.02)';
+            c.fillRect(chartArea.left, y70, chartArea.width, y30 - y70);
+            c.restore();
+        }
+    };
+
+    document.getElementById('custom-rsi-legend').innerHTML = `
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#eab308"></span>RSI (14)</div>
+        <div class="custom-legend-item"><span style="display:inline-block;width:14px;height:1px;border-top:1px dashed rgba(239,68,68,0.7);margin-bottom:2px;"></span>&nbsp;OB Over 70</div>
+        <div class="custom-legend-item"><span style="display:inline-block;width:14px;height:1px;border-top:1px dashed rgba(16,185,129,0.7);margin-bottom:2px;"></span>&nbsp;OS Under 30</div>`;
+
+    customCharts.rsi = new Chart(ctx, {
+        type: 'line',
+        plugins: [rsiBandPlugin],
+        data: {
+            labels: dates,
+            datasets: [
+                {
+                    label: 'RSI (14)',
+                    data: rsi,
+                    borderColor: '#eab308', // Yellow/Gold
+                    borderWidth: 1.8,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false,
+                    tension: 0.15,
+                    order: 1
+                },
+                // OB (70) and OS (30) reference lines
+                {
+                    label: 'Overbought (70)',
+                    data: Array(n).fill(70),
+                    borderColor: 'rgba(239,68,68,0.5)',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false,
+                    order: 2
+                },
+                {
+                    label: 'Oversold (30)',
+                    data: Array(n).fill(30),
+                    borderColor: 'rgba(16,185,129,0.5)',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false,
+                    order: 3
+                }
+            ]
+        },
+        options: {
+            ...customChartOptions({
+                yLabel: v => v.toFixed(0),
+                tooltipLabel: (ctx) => {
+                    const val = ctx.parsed.y;
+                    if (val === null || val === undefined) return null;
+                    if (ctx.datasetIndex > 0) return null; // Don't show reference line values in tooltip
+                    return `${ctx.dataset.label}: ${val.toFixed(1)}`;
+                }
+            }),
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#6b7280', maxTicksLimit: 10, font: { family: 'Plus Jakarta Sans', size: 10 } }
+                },
+                y: {
+                    min: 0,
+                    max: 100,
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { 
+                        color: '#6b7280', 
+                        stepSize: 10,
+                        font: { family: 'Plus Jakarta Sans', size: 10 },
+                        callback: v => v
+                    }
+                }
+            }
+        }
     });
 }
 
