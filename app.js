@@ -1930,31 +1930,40 @@ function renderCustomSpreadChart(ticker, data) {
         beforeDraw(chart) {
             const { ctx: c, chartArea, scales: { y } } = chart;
             if (!chartArea) return;
+
+            const y2Upper = y.getPixelForValue(std2_upper);
+            const y1Upper = y.getPixelForValue(std1_upper);
+            const y1Lower = y.getPixelForValue(std1_lower);
+            const y2Lower = y.getPixelForValue(std2_lower);
+
             const bands = [
-                { from: std2_upper, to: y.max,      color: '#ff0000', label: 'Extreme Overbought' },
-                { from: std1_upper, to: std2_upper,  color: 'rgba(239,68,68,0.35)', label: 'Overbought' },
-                { from: std2_lower, to: std1_lower,  color: 'rgba(34,197,94,0.35)', label: 'Oversold' },
-                { from: y.min,      to: std2_lower,  color: '#00b050', label: 'Extreme Oversold' },
+                { yTop: chartArea.top, yBottom: y2Upper, color: 'rgba(239, 68, 68, 0.35)', label: 'Extreme Overbought' },
+                { yTop: y2Upper, yBottom: y1Upper, color: 'rgba(239, 68, 68, 0.15)', label: 'Overbought' },
+                { yTop: y1Lower, yBottom: y2Lower, color: 'rgba(34, 197, 94, 0.15)', label: 'Oversold' },
+                { yTop: y2Lower, yBottom: chartArea.bottom, color: 'rgba(34, 197, 94, 0.35)', label: 'Extreme Oversold' },
             ];
+
             c.save();
             bands.forEach(band => {
-                const yTop    = y.getPixelForValue(Math.max(band.from, band.to));
-                const yBottom = y.getPixelForValue(Math.min(band.from, band.to));
-                const height  = Math.max(yBottom - yTop, 0);
-                
-                // Draw background color band
-                c.fillStyle = band.color;
-                c.fillRect(chartArea.left, Math.min(yTop, chartArea.top), chartArea.width, height);
-                
-                // Draw text label centered horizontally inside the band
-                if (height > 15) {
-                    c.fillStyle = '#ffffff';
-                    c.font = 'italic bold 12px "Plus Jakarta Sans", sans-serif';
-                    c.textAlign = 'center';
-                    c.textBaseline = 'middle';
-                    const centerX = chartArea.left + chartArea.width / 2;
-                    const centerY = Math.min(yTop, chartArea.top) + height / 2;
-                    c.fillText(band.label, centerX, centerY);
+                const yTop = Math.max(band.yTop, chartArea.top);
+                const yBottom = Math.min(band.yBottom, chartArea.bottom);
+                const height = yBottom - yTop;
+
+                if (height > 0) {
+                    // Draw background color band
+                    c.fillStyle = band.color;
+                    c.fillRect(chartArea.left, yTop, chartArea.width, height);
+
+                    // Draw text label centered horizontally inside the band
+                    if (height > 15) {
+                        c.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                        c.font = 'italic bold 11px "Plus Jakarta Sans", sans-serif';
+                        c.textAlign = 'center';
+                        c.textBaseline = 'middle';
+                        const centerX = chartArea.left + chartArea.width / 2;
+                        const centerY = yTop + height / 2;
+                        c.fillText(band.label, centerX, centerY);
+                    }
                 }
             });
             c.restore();
