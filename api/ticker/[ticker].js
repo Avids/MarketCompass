@@ -101,7 +101,7 @@ export default async function handler(req, res) {
     }
 
     // Build chart data (126-day lookback)
-    const chartData = buildTickerData(alignedDates, alignedCloses, alignedSpy, 126);
+    const chartData = buildTickerData(alignedDates, alignedCloses, alignedSpy, 126, timeframe);
     chartData.ticker = ticker;
 
     // ── 3. Enrich with company profile from FMP ─────────────────────────────────

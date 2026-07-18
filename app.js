@@ -1916,6 +1916,15 @@ function renderCustomSpreadChart(ticker, data) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
+    const isWeekly = customTimeframe === 'weekly';
+    const titleText = isWeekly ? '10-Week MA Spread' : '50-Day MA Spread';
+    const subtextText = isWeekly ? '% deviation from 10-WMA with std-dev bands' : '% deviation from 50-DMA with std-dev bands';
+    
+    const titleEl = document.getElementById('custom-spread-title');
+    const subEl = titleEl ? titleEl.nextElementSibling : null;
+    if (titleEl) titleEl.textContent = titleText;
+    if (subEl) subEl.textContent = subtextText;
+
     if (!data.values || !data.values.length) return;
 
     const { dates, values, mean, std1_upper, std1_lower, std2_upper, std2_lower } = data;
