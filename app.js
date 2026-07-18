@@ -899,18 +899,21 @@ async function openSectorModal(ticker, description) {
     modal.classList.add('active');
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
     
-    // Reset modal selector tabs active class
-    currentModalView = 'relative-strength';
+    // Reset modal selector tabs active class to 50DMA (ma-spread)
+    currentModalView = 'ma-spread';
     const modalTabButtons = document.querySelectorAll('.modal-tab-btn');
     modalTabButtons.forEach(btn => {
         btn.classList.remove('active');
-        if (btn.getAttribute('data-view') === 'relative-strength') {
+        if (btn.getAttribute('data-view') === 'ma-spread') {
             btn.classList.add('active');
         }
     });
     
-    // Render Relative Strength chart immediately (data is in memory)
-    drawModalRelativeStrengthChart(null, ticker);
+    // Show loading indicator
+    document.getElementById('modal-chart-legend').innerHTML = `
+        <div class="modal-legend-item" style="color: var(--text-muted);">
+            <i class="fa-solid fa-spinner fa-spin"></i>&nbsp;Loading historical data...
+        </div>`;
     
     try {
         // Fetch detailed historical data in background
