@@ -1905,7 +1905,7 @@ function renderCustomRSChart(ticker, data) {
     });
 }
 
-// Chart 2: 50-Day MA Spread with clear sigma reference lines
+// Chart 2: 50-Day MA Spread matching the exact reference style (cyan line + white-bordered dots + muted bands)
 function renderCustomSpreadChart(ticker, data) {
     const canvas = document.getElementById('custom-spread-chart');
     if (!canvas) return;
@@ -1916,15 +1916,19 @@ function renderCustomSpreadChart(ticker, data) {
     const { dates, values, mean, std1_upper, std1_lower, std2_upper, std2_lower } = data;
     const n = dates.length;
 
-    // Color the main line by zone
+    // Highlight points at extreme levels (>= +2 SD or <= -2 SD)
     const pointBg = values.map(v => {
-        if (v >= std2_upper) return '#ef4444';
-        if (v <= std2_lower) return '#10b981';
-        return 'rgba(6,182,212,0.6)';
+        if (v >= std2_upper) return '#ef4444'; // Red
+        if (v <= std2_lower) return '#10b981'; // Green
+        return 'transparent';
+    });
+    const pointBorderColor = values.map(v => {
+        if (v >= std2_upper || v <= std2_lower) return '#ffffff'; // White border
+        return 'transparent';
     });
     const pointRadius = values.map(v => (v >= std2_upper || v <= std2_lower) ? 5 : 0);
 
-    // Background band plugin with labels drawn in the middle of the chart
+    // Muted background band plugin (no text labels, matching the clean reference image)
     const bandPlugin = {
         id: 'customSpreadBands',
         beforeDraw(chart) {
@@ -1937,10 +1941,10 @@ function renderCustomSpreadChart(ticker, data) {
             const y2Lower = y.getPixelForValue(std2_lower);
 
             const bands = [
-                { yTop: chartArea.top, yBottom: y2Upper, color: 'rgba(239, 68, 68, 0.35)', label: 'Extreme Overbought' },
-                { yTop: y2Upper, yBottom: y1Upper, color: 'rgba(239, 68, 68, 0.15)', label: 'Overbought' },
-                { yTop: y1Lower, yBottom: y2Lower, color: 'rgba(34, 197, 94, 0.15)', label: 'Oversold' },
-                { yTop: y2Lower, yBottom: chartArea.bottom, color: 'rgba(34, 197, 94, 0.35)', label: 'Extreme Oversold' },
+                { yTop: chartArea.top, yBottom: y2Upper, color: 'rgba(127, 29, 29, 0.3)' },      // Extreme OB
+                { yTop: y2Upper, yBottom: y1Upper, color: 'rgba(239, 68, 68, 0.1)' },      // OB
+                { yTop: y1Lower, yBottom: y2Lower, color: 'rgba(16, 185, 129, 0.1)' },     // OS
+                { yTop: y2Lower, yBottom: chartArea.bottom, color: 'rgba(6, 95, 70, 0.3)' },     // Extreme OS
             ];
 
             c.save();
@@ -1950,20 +1954,8 @@ function renderCustomSpreadChart(ticker, data) {
                 const height = yBottom - yTop;
 
                 if (height > 0) {
-                    // Draw background color band
                     c.fillStyle = band.color;
                     c.fillRect(chartArea.left, yTop, chartArea.width, height);
-
-                    // Draw text label centered horizontally inside the band
-                    if (height > 15) {
-                        c.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                        c.font = 'italic bold 11px "Plus Jakarta Sans", sans-serif';
-                        c.textAlign = 'center';
-                        c.textBaseline = 'middle';
-                        const centerX = chartArea.left + chartArea.width / 2;
-                        const centerY = yTop + height / 2;
-                        c.fillText(band.label, centerX, centerY);
-                    }
                 }
             });
             c.restore();
@@ -1971,9 +1963,9 @@ function renderCustomSpreadChart(ticker, data) {
     };
 
     document.getElementById('custom-spread-legend').innerHTML = `
-        <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:2px;background:#ef4444;margin-bottom:2px;"></span>&nbsp;+2σ / −2σ</div>
-        <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:2px;background:rgba(239,68,68,0.55);margin-bottom:2px;"></span>&nbsp;+1σ / −1σ</div>
-        <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:2px;background:rgba(255,255,255,0.3);margin-bottom:2px;border-top:1px dashed rgba(255,255,255,0.3);"></span>&nbsp;Mean</div>`;
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ef4444; border: 1.5px solid #fff;"></span>Extreme Overbought (&ge; +2 SD)</div>
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#10b981; border: 1.5px solid #fff;"></span>Extreme Oversold (&le; -2 SD)</div>
+        <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:1px;background:rgba(255,255,255,0.3);margin-bottom:2px;border-top:1px dashed rgba(255,255,255,0.3);"></span>&nbsp;Mean</div>`;
 
     customCharts.spread = new Chart(ctx, {
         type: 'line',
@@ -1984,59 +1976,26 @@ function renderCustomSpreadChart(ticker, data) {
                 {
                     label: `${ticker} vs 50-DMA (%)`,
                     data: values,
-                    borderColor: '#1e3a8a', // Dark Navy/Blue matching image
+                    borderColor: '#06b6d4', // Cyan line
                     borderWidth: 2,
-                    pointRadius: 0,
-                    pointHoverRadius: 5,
+                    pointRadius: pointRadius,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: pointBg,
+                    pointBorderColor: pointBorderColor,
+                    pointBorderWidth: 1.8,
                     fill: false,
                     tension: 0.18,
                     order: 1
                 },
-                // Sigma reference lines as explicit datasets
                 {
-                    label: `+2σ (${std2_upper > 0 ? '+' : ''}${std2_upper.toFixed(1)}%)`,
-                    data: Array(n).fill(std2_upper),
-                    borderColor: 'rgba(255,255,255,0.3)',
+                    label: 'Mean',
+                    data: Array(n).fill(mean),
+                    borderColor: 'rgba(255,255,255,0.25)',
                     borderWidth: 1,
+                    borderDash: [5, 5],
                     pointRadius: 0,
                     fill: false,
                     order: 2
-                },
-                {
-                    label: `+1σ (${std1_upper > 0 ? '+' : ''}${std1_upper.toFixed(1)}%)`,
-                    data: Array(n).fill(std1_upper),
-                    borderColor: 'rgba(255,255,255,0.2)',
-                    borderWidth: 1,
-                    pointRadius: 0,
-                    fill: false,
-                    order: 3
-                },
-                {
-                    label: `Mean (${mean > 0 ? '+' : ''}${mean.toFixed(1)}%)`,
-                    data: Array(n).fill(mean),
-                    borderColor: 'rgba(255,255,255,0.4)',
-                    borderWidth: 1.2,
-                    pointRadius: 0,
-                    fill: false,
-                    order: 4
-                },
-                {
-                    label: `−1σ (${std1_lower > 0 ? '+' : ''}${std1_lower.toFixed(1)}%)`,
-                    data: Array(n).fill(std1_lower),
-                    borderColor: 'rgba(255,255,255,0.2)',
-                    borderWidth: 1,
-                    pointRadius: 0,
-                    fill: false,
-                    order: 5
-                },
-                {
-                    label: `−2σ (${std2_lower > 0 ? '+' : ''}${std2_lower.toFixed(1)}%)`,
-                    data: Array(n).fill(std2_lower),
-                    borderColor: 'rgba(255,255,255,0.3)',
-                    borderWidth: 1,
-                    pointRadius: 0,
-                    fill: false,
-                    order: 6
                 }
             ]
         },
