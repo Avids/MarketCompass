@@ -1610,7 +1610,7 @@ function drawModalPriceMaChart(data, ticker) {
 let customCharts = { rs: null, spread: null, price: null, rsi: null };
 let currentCustomTicker = null;
 let currentCustomTickerData = null;
-let customMaMode = '8/21'; // '8/21' or '20/80'
+let customMaMode = '8/21'; // '8/21' or '20/50'
 
 function setupCustomTickerListeners() {
     const loadBtn = document.getElementById('custom-ticker-load-btn');
@@ -1630,14 +1630,14 @@ function setupCustomTickerListeners() {
 
     // MA Mode toggles
     const ma821Btn = document.getElementById('custom-ma-8-21-btn');
-    const ma2080Btn = document.getElementById('custom-ma-20-80-btn');
+    const ma2050Btn = document.getElementById('custom-ma-20-50-btn');
 
-    if (ma821Btn && ma2080Btn) {
+    if (ma821Btn && ma2050Btn) {
         ma821Btn.addEventListener('click', () => {
             if (customMaMode !== '8/21') {
                 customMaMode = '8/21';
                 ma821Btn.classList.add('active');
-                ma2080Btn.classList.remove('active');
+                ma2050Btn.classList.remove('active');
                 document.getElementById('custom-price-subtext').textContent = 'Price with 8-Day and 21-Day moving averages';
                 if (currentCustomTickerData) {
                     renderCustomPriceChart(currentCustomTicker, currentCustomTickerData);
@@ -1645,12 +1645,12 @@ function setupCustomTickerListeners() {
             }
         });
 
-        ma2080Btn.addEventListener('click', () => {
-            if (customMaMode !== '20/80') {
-                customMaMode = '20/80';
-                ma2080Btn.classList.add('active');
+        ma2050Btn.addEventListener('click', () => {
+            if (customMaMode !== '20/50') {
+                customMaMode = '20/50';
+                ma2050Btn.classList.add('active');
                 ma821Btn.classList.remove('active');
-                document.getElementById('custom-price-subtext').textContent = 'Price with 20-Day and 80-Day moving averages';
+                document.getElementById('custom-price-subtext').textContent = 'Price with 20-Day and 50-Day moving averages';
                 if (currentCustomTickerData) {
                     renderCustomPriceChart(currentCustomTicker, currentCustomTickerData);
                 }
@@ -2081,11 +2081,11 @@ function renderCustomPriceChart(ticker, data) {
     let fastColor = '#f59e0b'; // Amber/Orange
     let slowColor = '#ec4899'; // Pink
 
-    if (customMaMode === '20/80') {
+    if (customMaMode === '20/50') {
         fastMa = ma20 || [];
-        slowMa = ma80 || [];
+        slowMa = ma50 || [];
         fastLabel = '20-Day MA';
-        slowLabel = '80-Day MA';
+        slowLabel = '50-Day MA';
     } else {
         // default 8/21
         fastMa = ma8 || [];
