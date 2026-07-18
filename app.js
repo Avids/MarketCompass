@@ -1607,7 +1607,7 @@ function drawModalPriceMaChart(data, ticker) {
 
 // ── Custom Ticker Tab ──────────────────────────────────────────────────────────
 
-let customCharts = { rs: null, spread: null, price: null, rsi: null, volume: null };
+let customCharts = { rs: null, spread: null, price: null, rsi: null, ad: null };
 let currentCustomTicker = null;
 let currentCustomTickerData = null;
 let customMaMode = '8/21'; // '8/21', '20/50', '13/65', '10/30', '50/150', '50/200'
@@ -1808,7 +1808,7 @@ function renderCustomMetaBar(ticker, data) {
 }
 
 function destroyCustomCharts() {
-    ['rs', 'spread', 'price', 'rsi', 'volume'].forEach(key => {
+    ['rs', 'spread', 'price', 'rsi', 'ad'].forEach(key => {
         if (customCharts[key]) {
             customCharts[key].destroy();
             customCharts[key] = null;
@@ -1822,7 +1822,7 @@ function renderCustomCharts(ticker, data) {
     renderCustomSpreadChart(ticker, data);
     renderCustomPriceChart(ticker, data);
     renderCustomRsiChart(ticker, data);
-    renderCustomVolumeChart(ticker, data);
+    renderCustomAdChart(ticker, data);
 }
 
 // Chart 1: Relative Strength vs SPY — line chart with segment coloring
@@ -1841,15 +1841,15 @@ function renderCustomRSChart(ticker, data) {
     const values = rs;
     const n = dates.length;
 
-    // 10-day or 10-week SMA
-    const smaPeriod = 10;
+    // 20-day or 20-week MA
+    const smaPeriod = 20;
     const smaValues = values.map((_, i) => {
         if (i < smaPeriod - 1) return null;
         const slice = values.slice(i - smaPeriod + 1, i + 1);
         return slice.reduce((a, b) => a + b, 0) / smaPeriod;
     });
 
-    const rsSmaLabel = customTimeframe === 'weekly' ? '10-Week SMA' : '10-Day SMA';
+    const rsSmaLabel = customTimeframe === 'weekly' ? '20-Week MA' : '20-Day MA';
 
     document.getElementById('custom-rs-legend').innerHTML = `
         <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#10b981"></span>Outperforming SPY</div>
@@ -2060,8 +2060,9 @@ function renderCustomPriceChart(ticker, data) {
     const maSuffix = customTimeframe === 'weekly' ? 'Week' : 'Day';
     const fastMa = data[`ma${fastPeriod}`] || [];
     const slowMa = data[`ma${slowPeriod}`] || [];
-    const fastLabel = `${fastPeriod}-${maSuffix} MA`;
-    const slowLabel = `${slowPeriod}-${maSuffix} MA`;
+    const maType = customMaMode === '8/21' ? 'EMA' : 'SMA';
+    const fastLabel = `${fastPeriod}-${maSuffix} ${maType}`;
+    const slowLabel = `${slowPeriod}-${maSuffix} ${maType}`;
     const fastColor = '#f59e0b'; // Amber/Orange
     const slowColor = '#ec4899'; // Pink
 
@@ -2075,7 +2076,7 @@ function renderCustomPriceChart(ticker, data) {
     };
 
     const rs = data.relative_strength || [];
-    const rsSma = calcSma(rs, 10);
+    const rsSma = calcSma(rs, 20);
     
     const pointStyles = [];
     const pointRadius = [];
@@ -2342,7 +2343,7 @@ async function copyChartImage(canvasId, chartTitle) {
         else if (canvasId === 'custom-spread-chart') chart = customCharts.spread;
         else if (canvasId === 'custom-price-chart') chart = customCharts.price;
         else if (canvasId === 'custom-rsi-chart') chart = customCharts.rsi;
-        else if (canvasId === 'custom-volume-chart') chart = customCharts.volume;
+        else if (canvasId === 'custom-ad-chart') chart = customCharts.ad;
         
         if (!chart) return;
         
@@ -2403,8 +2404,8 @@ async function copyChartImage(canvasId, chartTitle) {
             subtitleText = `Normalized relative strength vs SPY (baseline 100)`;
         } else if (canvasId === 'custom-spread-chart') {
             subtitleText = `Deviation from moving average with standard deviation bands`;
-        } else if (canvasId === 'custom-volume-chart') {
-            subtitleText = `Volume analysis showing accumulation and distribution bars`;
+        } else if (canvasId === 'custom-ad-chart') {
+            subtitleText = `Accumulation/Distribution line measuring supply/demand forces`;
         }
         
         tempCtx.fillText(titleText, 20, 28);
@@ -2480,95 +2481,49 @@ async function copyChartImage(canvasId, chartTitle) {
     }
 }
 
-function renderCustomVolumeChart(ticker, data) {
-    const canvas = document.getElementById('custom-volume-chart');
+function renderCustomAdChart(ticker, data) {
+    const canvas = document.getElementById('custom-ad-chart');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    const vols = data.volumes;
-    if (!vols || !vols.length) {
-        document.getElementById('custom-volume-legend').innerHTML = '<span style="color:#6b7280;font-size:0.8rem;">Volume data not available</span>';
+    const adValues = data.ad_line;
+    if (!adValues || !adValues.length) {
+        document.getElementById('custom-ad-legend').innerHTML = '<span style="color:#6b7280;font-size:0.8rem;">A/D Line data not available</span>';
         return;
     }
 
     const dates = data.dates;
-    const prices = data.prices;
-    
-    // 1. Calculate 20-period volume SMA (average volume line)
-    const volSmaPeriod = 20;
-    const volSma = vols.map((_, i) => {
-        if (i < volSmaPeriod - 1) return null;
-        const slice = vols.slice(i - volSmaPeriod + 1, i + 1);
-        return slice.reduce((a, b) => a + b, 0) / volSmaPeriod;
-    });
-
-    // 2. Classify volume bars
-    // Accumulation: Price goes UP (or equals) AND volume is above average
-    // Distribution: Price goes DOWN AND volume is above average
-    // Normal: Volume is below average (rendered in semi-transparent gray)
-    const barColors = [];
-    for (let i = 0; i < vols.length; i++) {
-        const v = vols[i];
-        const avg = volSma[i];
-        const isAboveAvg = avg !== null && v > avg;
-        
-        // Find if price went up or down compared to previous day
-        const priceChange = i > 0 ? (prices[i] - prices[i-1]) : 0;
-        
-        if (isAboveAvg) {
-            if (priceChange >= 0) {
-                barColors.push('rgba(16, 185, 129, 0.85)'); // Emerald Green (Accumulation)
-            } else {
-                barColors.push('rgba(239, 68, 68, 0.85)');  // Coral Red (Distribution)
-            }
-        } else {
-            // Normal volume (muted color)
-            barColors.push('rgba(107, 114, 128, 0.3)');     // Gray-500 muted
-        }
-    }
 
     // Legend
-    document.getElementById('custom-volume-legend').innerHTML = `
-        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:rgba(16, 185, 129, 0.85)"></span>Accumulation</div>
-        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:rgba(239, 68, 68, 0.85)"></span>Distribution</div>
-        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:rgba(107, 114, 128, 0.3)"></span>Normal Volume</div>
-        <div class="custom-legend-item"><span style="display:inline-block;width:14px;height:1px;border-top:1px dashed #f59e0b;margin-bottom:2px;"></span>&nbsp;Average Vol (20)</div>`;
+    document.getElementById('custom-ad-legend').innerHTML = `
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#a855f7"></span>Accumulation/Distribution Line</div>`;
 
-    if (customCharts.volume) {
-        customCharts.volume.destroy();
+    if (customCharts.ad) {
+        customCharts.ad.destroy();
     }
 
-    customCharts.volume = new Chart(ctx, {
-        type: 'bar',
+    customCharts.ad = new Chart(ctx, {
+        type: 'line',
         data: {
             labels: dates,
             datasets: [
                 {
-                    label: 'Volume',
-                    data: vols,
-                    backgroundColor: barColors,
-                    borderColor: 'transparent',
-                    borderWidth: 0,
-                    order: 2
-                },
-                {
-                    label: 'Average Volume (20)',
-                    data: volSma,
-                    type: 'line',
-                    borderColor: '#f59e0b',
-                    borderWidth: 1.2,
-                    borderDash: [5, 5],
+                    label: 'A/D Line',
+                    data: adValues,
+                    borderColor: '#a855f7',
+                    borderWidth: 2,
                     pointRadius: 0,
+                    pointHoverRadius: 4,
                     fill: false,
-                    tension: 0.15,
-                    order: 1
+                    tension: 0.15
                 }
             ]
         },
         options: customChartOptions({
             yLabel: v => {
-                if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`;
-                if (v >= 1000) return `${(v / 1000).toFixed(0)}K`;
+                if (Math.abs(v) >= 1000000000) return `${(v / 1000000000).toFixed(1)}B`;
+                if (Math.abs(v) >= 1000000) return `${(v / 1000000).toFixed(1)}M`;
+                if (Math.abs(v) >= 1000) return `${(v / 1000).toFixed(0)}K`;
                 return v;
             },
             tooltipLabel: (ctx) => {

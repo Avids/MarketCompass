@@ -86,6 +86,8 @@ export default async function handler(req, res) {
     const alignedCloses = [];
     const alignedSpy    = [];
     const alignedVols   = [];
+    const alignedHighs  = [];
+    const alignedLows   = [];
 
     tickerSeries.dates.forEach((d, i) => {
         if (spyByDate[d] !== undefined) {
@@ -93,6 +95,8 @@ export default async function handler(req, res) {
             alignedCloses.push(tickerSeries.closes[i]);
             alignedSpy.push(spyByDate[d]);
             alignedVols.push(tickerSeries.volumes ? tickerSeries.volumes[i] : 0);
+            alignedHighs.push(tickerSeries.highs ? tickerSeries.highs[i] : tickerSeries.closes[i]);
+            alignedLows.push(tickerSeries.lows ? tickerSeries.lows[i] : tickerSeries.closes[i]);
         }
     });
 
@@ -103,7 +107,7 @@ export default async function handler(req, res) {
     }
 
     // Build chart data (126-day lookback)
-    const chartData = buildTickerData(alignedDates, alignedCloses, alignedSpy, 126, timeframe, alignedVols);
+    const chartData = buildTickerData(alignedDates, alignedCloses, alignedSpy, 126, timeframe, alignedVols, alignedHighs, alignedLows);
     chartData.ticker = ticker;
 
     // ── 3. Enrich with company profile from FMP ─────────────────────────────────
