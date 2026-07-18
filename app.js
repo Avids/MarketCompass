@@ -1924,25 +1924,38 @@ function renderCustomSpreadChart(ticker, data) {
     });
     const pointRadius = values.map(v => (v >= std2_upper || v <= std2_lower) ? 5 : 0);
 
-    // Background band plugin
+    // Background band plugin with labels drawn in the middle of the chart
     const bandPlugin = {
         id: 'customSpreadBands',
         beforeDraw(chart) {
             const { ctx: c, chartArea, scales: { y } } = chart;
             if (!chartArea) return;
             const bands = [
-                { from: std2_upper, to: y.max,      color: 'rgba(220,38,38,0.15)' },
-                { from: std1_upper, to: std2_upper,  color: 'rgba(239,68,68,0.08)' },
-                { from: std1_lower, to: std1_upper,  color: 'rgba(255,255,255,0.02)' },
-                { from: std2_lower, to: std1_lower,  color: 'rgba(16,185,129,0.08)' },
-                { from: y.min,      to: std2_lower,  color: 'rgba(16,185,129,0.15)' },
+                { from: std2_upper, to: y.max,      color: '#ff0000', label: 'Extreme Overbought' },
+                { from: std1_upper, to: std2_upper,  color: 'rgba(239,68,68,0.35)', label: 'Overbought' },
+                { from: std2_lower, to: std1_lower,  color: 'rgba(34,197,94,0.35)', label: 'Oversold' },
+                { from: y.min,      to: std2_lower,  color: '#00b050', label: 'Extreme Oversold' },
             ];
             c.save();
             bands.forEach(band => {
                 const yTop    = y.getPixelForValue(Math.max(band.from, band.to));
                 const yBottom = y.getPixelForValue(Math.min(band.from, band.to));
+                const height  = Math.max(yBottom - yTop, 0);
+                
+                // Draw background color band
                 c.fillStyle = band.color;
-                c.fillRect(chartArea.left, Math.min(yTop, chartArea.top), chartArea.width, Math.max(yBottom - yTop, 0));
+                c.fillRect(chartArea.left, Math.min(yTop, chartArea.top), chartArea.width, height);
+                
+                // Draw text label centered horizontally inside the band
+                if (height > 15) {
+                    c.fillStyle = '#ffffff';
+                    c.font = 'italic bold 12px "Plus Jakarta Sans", sans-serif';
+                    c.textAlign = 'center';
+                    c.textBaseline = 'middle';
+                    const centerX = chartArea.left + chartArea.width / 2;
+                    const centerY = Math.min(yTop, chartArea.top) + height / 2;
+                    c.fillText(band.label, centerX, centerY);
+                }
             });
             c.restore();
         }
@@ -1951,9 +1964,7 @@ function renderCustomSpreadChart(ticker, data) {
     document.getElementById('custom-spread-legend').innerHTML = `
         <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:2px;background:#ef4444;margin-bottom:2px;"></span>&nbsp;+2σ / −2σ</div>
         <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:2px;background:rgba(239,68,68,0.55);margin-bottom:2px;"></span>&nbsp;+1σ / −1σ</div>
-        <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:2px;background:rgba(255,255,255,0.3);margin-bottom:2px;border-top:1px dashed rgba(255,255,255,0.3);"></span>&nbsp;Mean</div>
-        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ef4444"></span>Extreme Overbought</div>
-        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#10b981"></span>Extreme Oversold</div>`;
+        <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:2px;background:rgba(255,255,255,0.3);margin-bottom:2px;border-top:1px dashed rgba(255,255,255,0.3);"></span>&nbsp;Mean</div>`;
 
     customCharts.spread = new Chart(ctx, {
         type: 'line',
@@ -1964,13 +1975,10 @@ function renderCustomSpreadChart(ticker, data) {
                 {
                     label: `${ticker} vs 50-DMA (%)`,
                     data: values,
-                    borderColor: '#06b6d4',
+                    borderColor: '#1e3a8a', // Dark Navy/Blue matching image
                     borderWidth: 2,
-                    pointRadius: pointRadius,
+                    pointRadius: 0,
                     pointHoverRadius: 5,
-                    pointBackgroundColor: pointBg,
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 1.5,
                     fill: false,
                     tension: 0.18,
                     order: 1
@@ -1979,9 +1987,8 @@ function renderCustomSpreadChart(ticker, data) {
                 {
                     label: `+2σ (${std2_upper > 0 ? '+' : ''}${std2_upper.toFixed(1)}%)`,
                     data: Array(n).fill(std2_upper),
-                    borderColor: 'rgba(239,68,68,0.85)',
-                    borderWidth: 1.5,
-                    borderDash: [6, 3],
+                    borderColor: 'rgba(255,255,255,0.3)',
+                    borderWidth: 1,
                     pointRadius: 0,
                     fill: false,
                     order: 2
@@ -1989,9 +1996,8 @@ function renderCustomSpreadChart(ticker, data) {
                 {
                     label: `+1σ (${std1_upper > 0 ? '+' : ''}${std1_upper.toFixed(1)}%)`,
                     data: Array(n).fill(std1_upper),
-                    borderColor: 'rgba(239,68,68,0.45)',
+                    borderColor: 'rgba(255,255,255,0.2)',
                     borderWidth: 1,
-                    borderDash: [4, 4],
                     pointRadius: 0,
                     fill: false,
                     order: 3
@@ -1999,9 +2005,8 @@ function renderCustomSpreadChart(ticker, data) {
                 {
                     label: `Mean (${mean > 0 ? '+' : ''}${mean.toFixed(1)}%)`,
                     data: Array(n).fill(mean),
-                    borderColor: 'rgba(255,255,255,0.35)',
-                    borderWidth: 1,
-                    borderDash: [5, 4],
+                    borderColor: 'rgba(255,255,255,0.4)',
+                    borderWidth: 1.2,
                     pointRadius: 0,
                     fill: false,
                     order: 4
@@ -2009,9 +2014,8 @@ function renderCustomSpreadChart(ticker, data) {
                 {
                     label: `−1σ (${std1_lower > 0 ? '+' : ''}${std1_lower.toFixed(1)}%)`,
                     data: Array(n).fill(std1_lower),
-                    borderColor: 'rgba(16,185,129,0.45)',
+                    borderColor: 'rgba(255,255,255,0.2)',
                     borderWidth: 1,
-                    borderDash: [4, 4],
                     pointRadius: 0,
                     fill: false,
                     order: 5
@@ -2019,9 +2023,8 @@ function renderCustomSpreadChart(ticker, data) {
                 {
                     label: `−2σ (${std2_lower > 0 ? '+' : ''}${std2_lower.toFixed(1)}%)`,
                     data: Array(n).fill(std2_lower),
-                    borderColor: 'rgba(16,185,129,0.85)',
-                    borderWidth: 1.5,
-                    borderDash: [6, 3],
+                    borderColor: 'rgba(255,255,255,0.3)',
+                    borderWidth: 1,
                     pointRadius: 0,
                     fill: false,
                     order: 6
@@ -2034,8 +2037,7 @@ function renderCustomSpreadChart(ticker, data) {
                 tooltipLabel: (ctx) => {
                     const val = ctx.parsed.y;
                     if (val === null || val === undefined) return null;
-                    // Skip sigma lines from tooltip
-                    if (ctx.datasetIndex > 1) return `${ctx.dataset.label}`;
+                    if (ctx.datasetIndex > 0) return null;
                     return `${ctx.dataset.label}: ${val > 0 ? '+' : ''}${val.toFixed(2)}%`;
                 }
             }),
@@ -2047,7 +2049,7 @@ function renderCustomSpreadChart(ticker, data) {
                     bodyColor: '#f3f4f6',
                     borderColor: 'rgba(255,255,255,0.08)',
                     borderWidth: 1,
-                    filter: item => item.datasetIndex === 0, // Only show main line in tooltip
+                    filter: item => item.datasetIndex === 0,
                     callbacks: {
                         label: (ctx) => {
                             const val = ctx.parsed.y;
