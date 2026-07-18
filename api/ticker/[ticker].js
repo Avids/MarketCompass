@@ -24,6 +24,8 @@ export default async function handler(req, res) {
     }
 
     const ticker = (req.query.ticker ?? '').toUpperCase().trim();
+    const timeframe = req.query.timeframe === 'weekly' ? 'weekly' : 'daily';
+    const interval = timeframe === 'weekly' ? '1week' : '1day';
 
     if (!ticker || !/^[A-Z0-9.\-]{1,10}$/.test(ticker)) {
         return res.status(400).json({ error: 'Invalid ticker symbol' });
@@ -31,13 +33,13 @@ export default async function handler(req, res) {
 
     // ── 1. Check cache ──────────────────────────────────────────────────────────
     const redis   = getRedis();
-    const cacheKey = `ticker:${ticker}`;
+    const cacheKey = `ticker:${ticker}:${timeframe}`;
 
     if (redis) {
         try {
             const cached = await redis.get(cacheKey);
             if (cached) {
-                console.log(`Cache HIT: ${ticker}`);
+                console.log(`Cache HIT: ${ticker} (${timeframe})`);
                 res.setHeader('X-Cache', 'HIT');
                 res.setHeader('Cache-Control', `public, s-maxage=${CACHE_TTL}`);
                 return res.status(200).json(typeof cached === 'string' ? JSON.parse(cached) : cached);
@@ -48,24 +50,24 @@ export default async function handler(req, res) {
     }
 
     // ── 2. Fetch live data ──────────────────────────────────────────────────────
-    console.log(`Cache MISS: fetching ${ticker} from Twelvedata`);
+    console.log(`Cache MISS: fetching ${ticker} (${timeframe}) from Twelvedata`);
 
     let tickerSeries, spySeries;
     try {
-        const both = await fetchTimeSeries([ticker, 'SPY'], 220);
+        const both = await fetchTimeSeries([ticker, 'SPY'], 350, interval);
         tickerSeries = both[ticker];
         spySeries    = both['SPY'];
     } catch (err) {
         // If batched call fails, try fetching individually
         try {
             const [t, s] = await Promise.all([
-                fetchTimeSeries([ticker], 220),
-                fetchTimeSeries(['SPY'], 220),
+                fetchTimeSeries([ticker], 350, interval),
+                fetchTimeSeries(['SPY'], 350, interval),
             ]);
             tickerSeries = t[ticker];
             spySeries    = s['SPY'];
         } catch (e2) {
-            console.error(`Twelvedata fetch failed for ${ticker}:`, e2.message);
+            console.error(`Twelvedata fetch failed for ${ticker} (${timeframe}):`, e2.message);
             return res.status(502).json({ error: `Could not fetch data for ${ticker}. It may be an invalid or unlisted symbol.` });
         }
     }

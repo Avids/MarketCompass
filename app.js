@@ -1610,7 +1610,8 @@ function drawModalPriceMaChart(data, ticker) {
 let customCharts = { rs: null, spread: null, price: null, rsi: null };
 let currentCustomTicker = null;
 let currentCustomTickerData = null;
-let customMaMode = '8/21'; // '8/21' or '20/50'
+let customMaMode = '8/21'; // '8/21', '20/50', '13/65', '10/30', '50/150', '50/200'
+let customTimeframe = 'daily'; // 'daily' or 'weekly'
 
 function setupCustomTickerListeners() {
     const loadBtn = document.getElementById('custom-ticker-load-btn');
@@ -1628,32 +1629,41 @@ function setupCustomTickerListeners() {
         }
     });
 
-    // MA Mode toggles
-    const ma821Btn = document.getElementById('custom-ma-8-21-btn');
-    const ma2050Btn = document.getElementById('custom-ma-20-50-btn');
-
-    if (ma821Btn && ma2050Btn) {
-        ma821Btn.addEventListener('click', () => {
-            if (customMaMode !== '8/21') {
-                customMaMode = '8/21';
-                ma821Btn.classList.add('active');
-                ma2050Btn.classList.remove('active');
-                document.getElementById('custom-price-subtext').textContent = 'Price with 8-Day and 21-Day moving averages';
-                if (currentCustomTickerData) {
-                    renderCustomPriceChart(currentCustomTicker, currentCustomTickerData);
+    // Timeframe toggles
+    const dailyBtn = document.getElementById('custom-tf-daily-btn');
+    const weeklyBtn = document.getElementById('custom-tf-weekly-btn');
+    if (dailyBtn && weeklyBtn) {
+        dailyBtn.addEventListener('click', () => {
+            if (customTimeframe !== 'daily') {
+                customTimeframe = 'daily';
+                dailyBtn.classList.add('active');
+                weeklyBtn.classList.remove('active');
+                if (currentCustomTicker) {
+                    loadCustomTickerData(currentCustomTicker);
                 }
             }
         });
-
-        ma2050Btn.addEventListener('click', () => {
-            if (customMaMode !== '20/50') {
-                customMaMode = '20/50';
-                ma2050Btn.classList.add('active');
-                ma821Btn.classList.remove('active');
-                document.getElementById('custom-price-subtext').textContent = 'Price with 20-Day and 50-Day moving averages';
-                if (currentCustomTickerData) {
-                    renderCustomPriceChart(currentCustomTicker, currentCustomTickerData);
+        weeklyBtn.addEventListener('click', () => {
+            if (customTimeframe !== 'weekly') {
+                customTimeframe = 'weekly';
+                weeklyBtn.classList.add('active');
+                dailyBtn.classList.remove('active');
+                if (currentCustomTicker) {
+                    loadCustomTickerData(currentCustomTicker);
                 }
+            }
+        });
+    }
+
+    // MA select dropdown
+    const maSelect = document.getElementById('custom-ma-select');
+    if (maSelect) {
+        maSelect.addEventListener('change', (e) => {
+            customMaMode = e.target.value;
+            const maSuffix = customTimeframe === 'weekly' ? 'Week' : 'Day';
+            document.getElementById('custom-price-subtext').textContent = `Price with ${customMaMode.replace('/', ' and ')} ${maSuffix} moving averages`;
+            if (currentCustomTickerData) {
+                renderCustomPriceChart(currentCustomTicker, currentCustomTickerData);
             }
         });
     }
@@ -1709,9 +1719,6 @@ async function loadCustomTickerData(ticker) {
     const activeChip = document.getElementById(`chip-${ticker}`);
     if (activeChip) activeChip.classList.add('active');
 
-    // Update the command hint
-    const cmdEl = document.getElementById('custom-cmd-display');
-    if (cmdEl) cmdEl.textContent = `py update_data.py --add ${ticker}`;
 
     // Show loading spinner
     setCustomStatus('loading', `<i class="fa-solid fa-spinner fa-spin"></i>&nbsp; Fetching <strong>${ticker}</strong> from market data API...`, 'This usually takes 2–4 seconds.');
@@ -1720,7 +1727,7 @@ async function loadCustomTickerData(ticker) {
 
     try {
         // Call the Vercel serverless API function
-        const resp = await fetch(`/api/ticker/${ticker}`);
+        const resp = await fetch(`/api/ticker/${ticker}?timeframe=${customTimeframe}`);
 
         if (!resp.ok) {
             const errData = await resp.json().catch(() => ({}));
@@ -1763,7 +1770,6 @@ function setCustomStatus(type, title, sub) {
     const iconEl = panel.querySelector('.custom-status-icon i');
     const titleEl = panel.querySelector('.custom-status-title');
     const subEl = panel.querySelector('.custom-status-sub');
-    const cmdBlock = panel.querySelector('.custom-cmd-block');
 
     panel.className = 'custom-status-panel ' + (type === 'error' ? 'error' : type === 'success' ? 'success' : '');
 
@@ -1772,9 +1778,6 @@ function setCustomStatus(type, title, sub) {
 
     titleEl.innerHTML = title;
     subEl.innerHTML = sub;
-
-    // Only show the Python command hint in the initial idle state
-    if (cmdBlock) cmdBlock.style.display = type === 'info' ? 'flex' : 'none';
 }
 
 function renderCustomMetaBar(ticker, data) {
@@ -1837,7 +1840,7 @@ function renderCustomRSChart(ticker, data) {
     const values = rs;
     const n = dates.length;
 
-    // 10-day SMA
+    // 10-day or 10-week SMA
     const smaPeriod = 10;
     const smaValues = values.map((_, i) => {
         if (i < smaPeriod - 1) return null;
@@ -1845,10 +1848,12 @@ function renderCustomRSChart(ticker, data) {
         return slice.reduce((a, b) => a + b, 0) / smaPeriod;
     });
 
+    const rsSmaLabel = customTimeframe === 'weekly' ? '10-Week SMA' : '10-Day SMA';
+
     document.getElementById('custom-rs-legend').innerHTML = `
         <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#10b981"></span>Outperforming SPY</div>
         <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ef4444"></span>Underperforming SPY</div>
-        <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:1px;background:#9ca3af;margin-bottom:2px;opacity:0.8;"></span>&nbsp;10-Day SMA</div>
+        <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:1px;background:#9ca3af;margin-bottom:2px;opacity:0.8;"></span>&nbsp;${rsSmaLabel}</div>
         <div class="custom-legend-item"><span style="display:inline-block;width:16px;height:1px;background:rgba(255,255,255,0.25);margin-bottom:2px;border-top:1px dashed rgba(255,255,255,0.25);"></span>&nbsp;Baseline 100</div>`;
 
     customCharts.rs = new Chart(ctx, {
@@ -2041,26 +2046,14 @@ function renderCustomPriceChart(ticker, data) {
     // Destructure required arrays
     const { dates, prices, ma8, ma21, ma20, ma50, ma80, values: spreads, std2_upper, std2_lower } = data;
 
-    // Determine fast/slow MA based on customMaMode
-    let fastMa = [];
-    let slowMa = [];
-    let fastLabel = '';
-    let slowLabel = '';
-    let fastColor = '#f59e0b'; // Amber/Orange
-    let slowColor = '#ec4899'; // Pink
-
-    if (customMaMode === '20/50') {
-        fastMa = ma20 || [];
-        slowMa = ma50 || [];
-        fastLabel = '20-Day MA';
-        slowLabel = '50-Day MA';
-    } else {
-        // default 8/21
-        fastMa = ma8 || [];
-        slowMa = ma21 || [];
-        fastLabel = '8-Day MA';
-        slowLabel = '21-Day MA';
-    }
+    const [fastPeriod, slowPeriod] = customMaMode.split('/').map(Number);
+    const maSuffix = customTimeframe === 'weekly' ? 'Week' : 'Day';
+    const fastMa = data[`ma${fastPeriod}`] || [];
+    const slowMa = data[`ma${slowPeriod}`] || [];
+    const fastLabel = `${fastPeriod}-${maSuffix} MA`;
+    const slowLabel = `${slowPeriod}-${maSuffix} MA`;
+    const fastColor = '#f59e0b'; // Amber/Orange
+    const slowColor = '#ec4899'; // Pink
 
     // Overbought/Oversold dots on the price line (based on 50d spread)
     const dotRadius = prices.map((_, i) => {
@@ -2279,15 +2272,148 @@ function customChartOptions({ yLabel, tooltipLabel }) {
     };
 }
 
-// Copy the CLI command to clipboard
-function copyCustomCmd() {
-    const code = document.getElementById('custom-cmd-display');
-    if (!code) return;
-    navigator.clipboard.writeText(code.textContent).then(() => {
-        const btn = document.querySelector('.custom-cmd-copy-btn');
-        if (btn) {
-            btn.innerHTML = '<i class="fa-solid fa-check"></i>';
-            setTimeout(() => { btn.innerHTML = '<i class="fa-regular fa-copy"></i>'; }, 1500);
+async function copyChartImage(canvasId, chartTitle) {
+    try {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        
+        let chart = null;
+        if (canvasId === 'custom-rs-chart') chart = customCharts.rs;
+        else if (canvasId === 'custom-spread-chart') chart = customCharts.spread;
+        else if (canvasId === 'custom-price-chart') chart = customCharts.price;
+        else if (canvasId === 'custom-rsi-chart') chart = customCharts.rsi;
+        
+        if (!chart) return;
+        
+        // Find copy button to show feedback
+        const header = canvas.closest('.custom-chart-card').querySelector('.card-header');
+        const copyBtn = header ? header.querySelector('.action-btn') : null;
+        
+        // Save original colors for restoration
+        const originalXGridColor = chart.options.scales.x.grid ? chart.options.scales.x.grid.color : null;
+        const originalYGridColor = chart.options.scales.y.grid ? chart.options.scales.y.grid.color : null;
+        const originalXTicksColor = chart.options.scales.x.ticks ? chart.options.scales.x.ticks.color : null;
+        const originalYTicksColor = chart.options.scales.y.ticks ? chart.options.scales.y.ticks.color : null;
+        const originalLegendColor = chart.options.plugins.legend && chart.options.plugins.legend.labels ? chart.options.plugins.legend.labels.color : null;
+        
+        // Find zero line if exists
+        const zeroLineDataset = chart.data.datasets.find(d => d.label === 'Zero Line');
+        const originalZeroLineColor = zeroLineDataset ? zeroLineDataset.borderColor : null;
+        
+        // Setup export styling (rich dark theme for contrast)
+        if (chart.options.scales.x.grid) chart.options.scales.x.grid.color = 'rgba(255, 255, 255, 0.04)';
+        if (chart.options.scales.y.grid) chart.options.scales.y.grid.color = 'rgba(255, 255, 255, 0.04)';
+        if (chart.options.scales.x.ticks) chart.options.scales.x.ticks.color = '#9ca3af';
+        if (chart.options.scales.y.ticks) chart.options.scales.y.ticks.color = '#9ca3af';
+        if (chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+            chart.options.plugins.legend.labels.color = '#e5e7eb';
         }
-    });
+        
+        if (zeroLineDataset) {
+            zeroLineDataset.borderColor = 'rgba(255, 255, 255, 0.35)';
+        }
+        
+        chart.update('none');
+        
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        const headerHeight = 90;
+        const footerHeight = 40;
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height + headerHeight + footerHeight;
+        
+        // Fill with premium dark theme background color (#0a0f1d)
+        tempCtx.fillStyle = '#0a0f1d';
+        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        
+        // Draw Header
+        tempCtx.fillStyle = '#ffffff';
+        tempCtx.font = 'bold 16px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        
+        const tickerLabel = currentCustomTicker ? `${currentCustomTicker} - ` : '';
+        const titleText = `${tickerLabel}${chartTitle} (${customTimeframe.toUpperCase()})`;
+        let subtitleText = `Analysis generated on MarketCompass dashboard`;
+        if (canvasId === 'custom-price-chart') {
+            subtitleText = `Price plotted with ${customMaMode} simple moving averages`;
+        } else if (canvasId === 'custom-rsi-chart') {
+            subtitleText = `Relative Strength Index (RSI 14) momentum oscillator`;
+        } else if (canvasId === 'custom-rs-chart') {
+            subtitleText = `Normalized relative strength vs SPY (baseline 100)`;
+        } else if (canvasId === 'custom-spread-chart') {
+            subtitleText = `Deviation from moving average with standard deviation bands`;
+        }
+        
+        tempCtx.fillText(titleText, 20, 28);
+        
+        tempCtx.fillStyle = '#9ca3af';
+        tempCtx.font = '500 12px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        tempCtx.fillText(subtitleText, 20, 48);
+        
+        tempCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        tempCtx.lineWidth = 1;
+        tempCtx.beginPath();
+        tempCtx.moveTo(20, 70);
+        tempCtx.lineTo(tempCanvas.width - 20, 70);
+        tempCtx.stroke();
+        
+        tempCtx.drawImage(canvas, 0, headerHeight);
+        
+        tempCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        tempCtx.beginPath();
+        tempCtx.moveTo(20, tempCanvas.height - 35);
+        tempCtx.lineTo(tempCanvas.width - 20, tempCanvas.height - 35);
+        tempCtx.stroke();
+        
+        const todayStr = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        tempCtx.fillStyle = '#6b7280';
+        tempCtx.font = '400 10px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        tempCtx.fillText(`Exported from MarketCompass on: ${todayStr}`, 20, tempCanvas.height - 15);
+        
+        if (chart.options.scales.x.grid) chart.options.scales.x.grid.color = originalXGridColor;
+        if (chart.options.scales.y.grid) chart.options.scales.y.grid.color = originalYGridColor;
+        if (chart.options.scales.x.ticks) chart.options.scales.x.ticks.color = originalXTicksColor;
+        if (chart.options.scales.y.ticks) chart.options.scales.y.ticks.color = originalYTicksColor;
+        if (chart.options.plugins.legend && chart.options.plugins.legend.labels && originalLegendColor) {
+            chart.options.plugins.legend.labels.color = originalLegendColor;
+        }
+        if (zeroLineDataset && originalZeroLineColor) {
+            zeroLineDataset.borderColor = originalZeroLineColor;
+        }
+        chart.update('none');
+        
+        tempCanvas.toBlob(async (blob) => {
+            if (!blob) {
+                console.error('Failed to create blob from canvas');
+                return;
+            }
+            
+            await navigator.clipboard.write([
+                new ClipboardItem({
+                    'image/png': blob
+                })
+            ]);
+            
+            if (copyBtn) {
+                const originalContent = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+                copyBtn.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalContent;
+                    copyBtn.style.borderColor = '';
+                }, 2000);
+            }
+        }, 'image/png');
+    } catch (err) {
+        console.error('Failed to copy chart:', err);
+        alert('Failed to copy chart. Please try taking a screenshot instead.');
+    }
 }
+

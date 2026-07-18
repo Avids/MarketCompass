@@ -190,12 +190,21 @@
                         </div>
                         <div class="card-body">
                             <div class="custom-ticker-search-area">
-                                <div class="custom-input-group">
-                                    <i class="fa-solid fa-magnifying-glass-chart custom-search-icon"></i>
-                                    <input type="text" id="custom-ticker-input" class="custom-ticker-input" placeholder="e.g. AAPL, MSFT, NVDA..." autocomplete="off" spellcheck="false">
-                                    <button id="custom-ticker-load-btn" class="action-btn custom-load-btn">
-                                        <i class="fa-solid fa-chart-column"></i> Analyze
-                                    </button>
+                                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                    <div class="custom-input-group">
+                                        <i class="fa-solid fa-magnifying-glass-chart custom-search-icon"></i>
+                                        <input type="text" id="custom-ticker-input" class="custom-ticker-input" placeholder="e.g. AAPL, MSFT, NVDA..." autocomplete="off" spellcheck="false">
+                                        <button id="custom-ticker-load-btn" class="action-btn custom-load-btn">
+                                            <i class="fa-solid fa-chart-column"></i> Analyze
+                                        </button>
+                                    </div>
+                                    <div class="timeframe-toggle-container" style="display: flex; align-items: center; gap: 8px; margin-top: 5px; padding-left: 5px;">
+                                        <span style="font-size: 0.8rem; color: var(--text-muted);">Timeframe:</span>
+                                        <div class="toggle-container" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 2px; display: flex; gap: 2px;">
+                                            <button id="custom-tf-daily-btn" class="tab-btn active" style="font-size: 0.7rem; padding: 3px 8px; border-radius: 4px;">Daily</button>
+                                            <button id="custom-tf-weekly-btn" class="tab-btn" style="font-size: 0.7rem; padding: 3px 8px; border-radius: 4px;">Weekly</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div id="custom-ticker-chips" class="custom-ticker-chips">
                                     <!-- Populated dynamically -->
@@ -208,11 +217,7 @@
                                 </div>
                                 <div class="custom-status-text">
                                     <p class="custom-status-title">Enter a ticker above to get started</p>
-                                    <p class="custom-status-sub">Charts will appear here instantly if the ticker's data is already cached locally. For new tickers, run the command below in your terminal first:</p>
-                                    <div class="custom-cmd-block">
-                                        <code id="custom-cmd-display">py update_data.py --add &lt;TICKER&gt;</code>
-                                        <button class="custom-cmd-copy-btn" onclick="copyCustomCmd()"><i class="fa-regular fa-copy"></i></button>
-                                    </div>
+                                    <p class="custom-status-sub">Enter any US stock or ETF ticker to generate relative strength and moving average spread analysis charts.</p>
                                 </div>
                             </div>
                         </div>
@@ -224,12 +229,17 @@
 
                         <!-- Chart 1: Relative Strength -->
                         <section class="card glass-card custom-chart-card">
-                            <div class="card-header">
+                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                                 <div>
                                     <h2 id="custom-rs-title">Relative Strength vs SPY</h2>
-                                    <span class="subtext">Price ratio vs SPY normalized to 100 (126 days)</span>
+                                    <span class="subtext">Price ratio vs SPY normalized to 100 (126 periods)</span>
                                 </div>
-                                <div class="custom-chart-legend" id="custom-rs-legend"></div>
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <button class="action-btn" onclick="copyChartImage('custom-rs-chart', 'Relative Strength')" style="font-size: 0.75rem; padding: 6px 12px; display: flex; align-items: center; gap: 6px;" title="Copy chart to clipboard">
+                                        <i class="fa-regular fa-copy"></i> Copy
+                                    </button>
+                                    <div class="custom-chart-legend" id="custom-rs-legend"></div>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="ma-spread-chart-wrapper">
@@ -240,12 +250,17 @@
 
                         <!-- Chart 2: 50-Day MA Spread -->
                         <section class="card glass-card custom-chart-card">
-                            <div class="card-header">
+                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                                 <div>
                                     <h2 id="custom-spread-title">50-Day MA Spread</h2>
                                     <span class="subtext">% deviation from 50-DMA with std-dev bands</span>
                                 </div>
-                                <div class="custom-chart-legend" id="custom-spread-legend"></div>
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <button class="action-btn" onclick="copyChartImage('custom-spread-chart', '50-Day MA Spread')" style="font-size: 0.75rem; padding: 6px 12px; display: flex; align-items: center; gap: 6px;" title="Copy chart to clipboard">
+                                        <i class="fa-regular fa-copy"></i> Copy
+                                    </button>
+                                    <div class="custom-chart-legend" id="custom-spread-legend"></div>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="ma-spread-chart-wrapper">
@@ -256,17 +271,24 @@
 
                         <!-- Chart 3: Price & MAs -->
                         <section class="card glass-card custom-chart-card">
-                            <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                                 <div>
                                     <h2 id="custom-price-title">Price &amp; Moving Averages</h2>
-                                    <span class="subtext" id="custom-price-subtext">Price with 8-Day and 21-Day moving averages</span>
+                                    <span class="subtext" id="custom-price-subtext">Price with selected moving averages</span>
                                 </div>
-                                <div style="display: flex; align-items: center; gap: 15px;">
-                                    <!-- MA Selector Toggle Buttons -->
-                                    <div class="toggle-container" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 2px; display: flex; gap: 2px;">
-                                        <button id="custom-ma-8-21-btn" class="tab-btn active" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;">8/21 DMA</button>
-                                        <button id="custom-ma-20-50-btn" class="tab-btn" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;">20/50 DMA</button>
-                                    </div>
+                                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                                    <!-- MA Selector Dropdown -->
+                                    <select id="custom-ma-select" style="background: rgba(10, 15, 29, 0.85); color: #e5e7eb; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 4px 8px; font-size: 0.8rem; font-family: inherit; outline: none; cursor: pointer;">
+                                        <option value="8/21" selected>8/21 MA</option>
+                                        <option value="20/50">20/50 MA</option>
+                                        <option value="13/65">13/65 MA</option>
+                                        <option value="10/30">10/30 MA</option>
+                                        <option value="50/150">50/150 MA</option>
+                                        <option value="50/200">50/200 MA</option>
+                                    </select>
+                                    <button class="action-btn" onclick="copyChartImage('custom-price-chart', 'Price & Moving Averages')" style="font-size: 0.75rem; padding: 6px 12px; display: flex; align-items: center; gap: 6px;" title="Copy chart to clipboard">
+                                        <i class="fa-regular fa-copy"></i> Copy
+                                    </button>
                                     <div class="custom-chart-legend" id="custom-price-legend"></div>
                                 </div>
                             </div>
@@ -279,12 +301,17 @@
 
                         <!-- Chart 4: RSI (14) -->
                         <section class="card glass-card custom-chart-card">
-                            <div class="card-header">
+                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                                 <div>
                                     <h2>Relative Strength Index (RSI 14)</h2>
                                     <span class="subtext">Momentum oscillator measuring velocity/magnitude of price changes</span>
                                 </div>
-                                <div class="custom-chart-legend" id="custom-rsi-legend"></div>
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <button class="action-btn" onclick="copyChartImage('custom-rsi-chart', 'RSI (14)')" style="font-size: 0.75rem; padding: 6px 12px; display: flex; align-items: center; gap: 6px;" title="Copy chart to clipboard">
+                                        <i class="fa-regular fa-copy"></i> Copy
+                                    </button>
+                                    <div class="custom-chart-legend" id="custom-rsi-legend"></div>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="ma-spread-chart-wrapper">
