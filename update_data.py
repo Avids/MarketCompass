@@ -81,7 +81,7 @@ def fetch_ma_spread(tickers=("QQQ", "SPY"), ma_period=50, lookback_days=252, for
     # Fetch SPY historical prices for relative strength calculation
     spy_close = None
     try:
-        spy_hist = yf.Ticker("SPY").history(period=f"{period_days}d")
+        spy_hist = yf.Ticker("SPY").history(period="2y")
         if not spy_hist.empty:
             spy_close = spy_hist["Close"]
     except Exception as e:
@@ -99,7 +99,7 @@ def fetch_ma_spread(tickers=("QQQ", "SPY"), ma_period=50, lookback_days=252, for
                 print(f"  [cache miss] Error reading cache for {ticker}: {e}")
 
         try:
-            hist = yf.Ticker(ticker).history(period=f"{period_days}d")
+            hist = yf.Ticker(ticker).history(period="2y")
             if hist.empty or len(hist) < ma_period + 5:
                 print(f"Not enough history for {ticker} MA spread")
                 continue
@@ -457,8 +457,8 @@ def main(force=False):
     print("Collecting dashboard data...")
     fg_data = fetch_fear_and_greed()
     market_data = fetch_market_data(force=force)
-    # Get MA spread for QQQ, IWM, and DIA only (shown in the main page card)
-    ma_spread_tickers = ("QQQ", "IWM", "DIA")
+    # Get MA spread for SPY and QQQ (shown in the main page card)
+    ma_spread_tickers = ("SPY", "QQQ")
     ma_spread_data = fetch_ma_spread(tickers=ma_spread_tickers, force=force)
     
     # Save individual MA spread history files in a 'history' folder for modal popup requests
