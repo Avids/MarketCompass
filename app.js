@@ -2064,24 +2064,73 @@ function renderCustomPriceChart(ticker, data) {
     const fastColor = '#f59e0b'; // Amber/Orange
     const slowColor = '#ec4899'; // Pink
 
-    // Overbought/Oversold dots on the price line (based on 50d spread)
-    const dotRadius = prices.map((_, i) => {
-        const s = spreads ? spreads[i] : 0;
-        return (s >= std2_upper || s <= std2_lower) ? 5 : 0;
-    });
-    const dotBg = prices.map((_, i) => {
-        const s = spreads ? spreads[i] : 0;
-        if (s >= std2_upper) return '#ef4444';
-        if (s <= std2_lower) return '#10b981';
-        return 'transparent';
-    });
+    // Confluence calculation helper
+    const calcSma = (arr, period) => {
+        return arr.map((_, i) => {
+            if (i < period - 1) return null;
+            const slice = arr.slice(i - period + 1, i + 1);
+            return slice.reduce((a, b) => a + b, 0) / period;
+        });
+    };
+
+    const rs = data.relative_strength || [];
+    const rsSma = calcSma(rs, 10);
+    
+    const pointStyles = [];
+    const pointRadius = [];
+    const pointHoverRadius = [];
+    const pointBg = [];
+    const pointBorderColor = [];
+
+    for (let i = 0; i < prices.length; i++) {
+        const price = prices[i];
+        const fast = fastMa[i];
+        const slow = slowMa[i];
+        const rsi = data.rsi ? data.rsi[i] : null;
+        const spread = spreads ? spreads[i] : null;
+        
+        const isPriceAboveMAs = fast !== null && slow !== null && price > fast && price > slow;
+        const isMaBullish = fast !== null && slow !== null && fast > slow;
+        const isRsiBullish = rsi !== null && rsi >= 45 && rsi <= 65;
+        
+        // Relative strength breakout
+        const isRsAboveSma = rs[i] !== null && rsSma[i] !== null && rs[i] > rsSma[i];
+        const isRsFreshCross = isRsAboveSma && (i === 0 || rs[i-1] === null || rsSma[i-1] === null || rs[i-1] <= rsSma[i-1] || (i >= 2 && rs[i-2] <= rsSma[i-2]));
+        
+        const isSpreadValid = spread !== null && spread > 0 && (std2_upper === null || spread < std2_upper);
+        
+        // Buy Signal: confluence
+        if (isPriceAboveMAs && isMaBullish && isRsiBullish && isRsFreshCross && isSpreadValid) {
+            pointStyles.push('triangle');
+            pointRadius.push(8);
+            pointHoverRadius.push(10);
+            pointBg.push('#10b981'); // Emerald green
+            pointBorderColor.push('#ffffff');
+        }
+        // Take-Profit Warning: extreme overbought spread or RSI >= 70
+        else if ((spread !== null && std2_upper !== null && spread >= std2_upper) || (rsi !== null && rsi >= 70)) {
+            pointStyles.push('circle');
+            pointRadius.push(5);
+            pointHoverRadius.push(7);
+            pointBg.push('#ef4444'); // Coral red
+            pointBorderColor.push('#ffffff');
+        }
+        // Default: hide point
+        else {
+            pointStyles.push('circle');
+            pointRadius.push(0);
+            pointHoverRadius.push(4);
+            pointBg.push('transparent');
+            pointBorderColor.push('transparent');
+        }
+    }
 
     document.getElementById('custom-price-legend').innerHTML = `
         <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#06b6d4"></span>Price</div>
         <div class="custom-legend-item"><span style="display:inline-block;width:14px;height:1px;border-top:2px dashed ${fastColor};margin-bottom:2px;"></span>&nbsp;${fastLabel}</div>
         <div class="custom-legend-item"><span style="display:inline-block;width:14px;height:1px;border-top:2px dashed ${slowColor};margin-bottom:2px;"></span>&nbsp;${slowLabel}</div>
-        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ef4444"></span>Overbought</div>
-        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#10b981"></span>Oversold</div>`;
+        <div class="custom-legend-item"><span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:8px solid #10b981;margin-bottom:2px;"></span>&nbsp;Buy (Confluence)</div>
+        <div class="custom-legend-item"><span class="custom-legend-dot" style="background:#ef4444"></span>Take-Profit Warning</div>`;
 
     if (customCharts.price) {
         customCharts.price.destroy();
@@ -2097,10 +2146,11 @@ function renderCustomPriceChart(ticker, data) {
                     data: prices,
                     borderColor: '#06b6d4',
                     borderWidth: 2.2,
-                    pointRadius: dotRadius,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: dotBg,
-                    pointBorderColor: '#ffffff',
+                    pointStyle: pointStyles,
+                    pointRadius: pointRadius,
+                    pointHoverRadius: pointHoverRadius,
+                    pointBackgroundColor: pointBg,
+                    pointBorderColor: pointBorderColor,
                     pointBorderWidth: 1.5,
                     fill: false,
                     tension: 0.15,
