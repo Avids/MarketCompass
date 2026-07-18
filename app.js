@@ -151,11 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Auto-select Ticker Analysis tab and focus input field on page open
+    // Auto-select Overview tab on page open
     setTimeout(() => {
-        const customTabBtn = document.getElementById('tab-custom');
-        if (customTabBtn) {
-            customTabBtn.click();
+        const overviewTabBtn = document.getElementById('tab-overview');
+        if (overviewTabBtn) {
+            overviewTabBtn.click();
         }
     }, 50);
 });
@@ -619,8 +619,13 @@ function renderHighYieldSpread(hyData) {
     const { dates, values, last_value } = hyData;
     
     // Update UI elements
-    const lastVal = last_value !== undefined ? last_value : values[values.length - 1];
-    document.getElementById('hy-last-value').textContent = `${lastVal.toFixed(2)}%`;
+    const lastVal = last_value !== undefined && last_value !== null ? last_value : (values && values.length ? values[values.length - 1] : null);
+    if (lastVal === null || lastVal === undefined || isNaN(lastVal)) {
+        document.getElementById('hy-last-value').textContent = '--%';
+        document.getElementById('hy-risk-rating').textContent = 'N/A';
+        return;
+    }
+    document.getElementById('hy-last-value').textContent = `${Number(lastVal).toFixed(2)}%`;
     
     const ratingEl = document.getElementById('hy-risk-rating');
     if (lastVal < 3.50) {
