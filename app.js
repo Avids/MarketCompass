@@ -162,7 +162,7 @@ async function loadData() {
         renderCharts(fullData.relative_strength);
         renderLeaderboard();
         renderMaSpread(fullData.ma_spread);
-        renderCustomTickerChips(fullData.custom_tickers);
+        renderRecentTickerChips();
     } catch (error) {
         console.error('Error fetching dashboard data:', error);
         document.getElementById('last-updated-text').textContent = 'Error loading data';
@@ -1627,27 +1627,45 @@ function setupCustomTickerListeners() {
     });
 }
 
-function renderCustomTickerChips(customTickers) {
+function renderCustomTickerChips() {
+    renderRecentTickerChips();
+}
+
+// Render recently searched tickers from localStorage as clickable chips
+function renderRecentTickerChips() {
     const chipsEl = document.getElementById('custom-ticker-chips');
     if (!chipsEl) return;
     chipsEl.innerHTML = '';
 
-    if (!customTickers || Object.keys(customTickers).length === 0) return;
+    const recent = getRecentTickers();
+    if (!recent.length) return;
 
-    Object.entries(customTickers).forEach(([ticker, meta]) => {
+    recent.forEach(ticker => {
         const chip = document.createElement('button');
         chip.className = 'custom-chip';
         chip.id = `chip-${ticker}`;
         chip.innerHTML = `<span class="chip-dot"></span>${ticker}`;
-        if (meta && meta.name && meta.name !== ticker) {
-            chip.title = meta.name;
-        }
+        chip.title = 'Recently analyzed';
         chip.addEventListener('click', () => {
             document.getElementById('custom-ticker-input').value = ticker;
             loadCustomTickerData(ticker);
         });
         chipsEl.appendChild(chip);
     });
+}
+
+function getRecentTickers() {
+    try {
+        return JSON.parse(localStorage.getItem('mc_recent_tickers') || '[]');
+    } catch { return []; }
+}
+
+function addRecentTicker(ticker) {
+    try {
+        const list = getRecentTickers().filter(t => t !== ticker);
+        list.unshift(ticker);
+        localStorage.setItem('mc_recent_tickers', JSON.stringify(list.slice(0, 8)));
+    } catch {}
 }
 
 async function loadCustomTickerData(ticker) {
@@ -1663,18 +1681,34 @@ async function loadCustomTickerData(ticker) {
     const cmdEl = document.getElementById('custom-cmd-display');
     if (cmdEl) cmdEl.textContent = `py update_data.py --add ${ticker}`;
 
-    // Show loading state
-    setCustomStatus('loading', `<strong>Loading ${ticker}...</strong>`, '');
+    // Show loading spinner
+    setCustomStatus('loading', `<i class="fa-solid fa-spinner fa-spin"></i>&nbsp; Fetching <strong>${ticker}</strong> from market data API...`, 'This usually takes 2–4 seconds.');
+    document.getElementById('custom-charts-area').style.display = 'none';
+    destroyCustomCharts();
 
     try {
-        const resp = await fetch(`history/${ticker}.json?t=${new Date().getTime()}`);
-        if (!resp.ok) throw new Error('not_found');
+        // Call the Vercel serverless API function
+        const resp = await fetch(`/api/ticker/${ticker}`);
+
+        if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP ${resp.status}`);
+        }
+
         const data = await resp.json();
 
-        // Success — render everything
+        // Success — save to recent list and render
+        addRecentTicker(ticker);
+        renderRecentTickerChips();
+
+        // Mark active chip
+        document.querySelectorAll('.custom-chip').forEach(c => c.classList.remove('active'));
+        const newChip = document.getElementById(`chip-${ticker}`);
+        if (newChip) newChip.classList.add('active');
+
         setCustomStatus('success',
             `<strong>${ticker}</strong>${data.name && data.name !== ticker ? ` — ${data.name}` : ''} loaded successfully`,
-            `Cached data: ${data.fetched_at ? new Date(data.fetched_at).toLocaleString() : 'N/A'}`
+            `Source: Twelvedata live API${resp.headers.get('X-Cache') === 'HIT' ? ' (cached)' : ''} &nbsp;·&nbsp; ${data.fetched_at ? new Date(data.fetched_at).toLocaleString() : 'just now'}`
         );
         renderCustomMetaBar(ticker, data);
         renderCustomCharts(ticker, data);
@@ -1684,8 +1718,8 @@ async function loadCustomTickerData(ticker) {
         document.getElementById('custom-charts-area').style.display = 'none';
         destroyCustomCharts();
         setCustomStatus('error',
-            `No cached data found for <strong>${ticker}</strong>`,
-            `To fetch this ticker's data, run the following command in your terminal, then refresh the dashboard:`
+            `Could not load data for <strong>${ticker}</strong>`,
+            err.message || 'The symbol may be invalid, delisted, or the API is temporarily unavailable.'
         );
     }
 }

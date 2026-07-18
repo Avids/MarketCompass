@@ -1,0 +1,16 @@
+{
+  "name": "marketcompass",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MarketCompass Dashboard — market sentiment and sector analysis",
+  "scripts": {
+    "update": "node scripts/update-data.js",
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.34.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

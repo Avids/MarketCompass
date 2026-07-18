@@ -1,0 +1,45 @@
+name: Update Market Data
+
+on:
+  schedule:
+    # Runs at 9:15 AM ET (13:15 UTC) on weekdays — 15 min after market open
+    - cron: '15 13 * * 1-5'
+  workflow_dispatch:
+    # Also allows manual trigger from GitHub Actions UI
+
+jobs:
+  update:
+    name: Fetch & Commit Market Data
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to commit and push data.json
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run data update script
+        env:
+          TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
+          FMP_API_KEY:        ${{ secrets.FMP_API_KEY }}
+          FINNHUB_API_KEY:    ${{ secrets.FINNHUB_API_KEY }}
+        run: node scripts/update-data.js
+
+      - name: Commit and push updated data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.json history/
+          git diff --staged --quiet || git commit -m "chore: auto-update market data [$(date -u +%Y-%m-%dT%H:%M:%SZ)]"
+          git push
