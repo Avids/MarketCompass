@@ -139,8 +139,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     content.classList.add('active');
                 }
             });
+
+            // Focus custom ticker input when custom tab is selected
+            if (tabId === 'custom') {
+                setTimeout(() => {
+                    const input = document.getElementById('custom-ticker-input');
+                    if (input) input.focus();
+                }, 50);
+            }
         });
     });
+
+    // Auto-select Ticker Analysis tab and focus input field on page open
+    setTimeout(() => {
+        const customTabBtn = document.getElementById('tab-custom');
+        if (customTabBtn) {
+            customTabBtn.click();
+        }
+    }, 50);
 });
 
 
