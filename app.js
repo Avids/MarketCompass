@@ -1761,7 +1761,7 @@ function drawModalPriceMaChart(data, ticker) {
 let customCharts = { rs: null, spread: null, price: null, rsi: null, ad: null };
 let currentCustomTicker = null;
 let currentCustomTickerData = null;
-let customMaMode = '8/21'; // '8/21', '20/50', '13/65', '10/30', '50/150', '50/200'
+let customMaMode = '10/20'; // '8/21', '20/50', '13/65', '10/30', '50/150', '50/200'
 let customTimeframe = 'daily'; // 'daily' or 'weekly'
 
 function setupCustomTickerListeners() {
@@ -2042,7 +2042,7 @@ function renderCustomRSChart(ticker, data) {
                     order: 3
                 },
                 {
-                    label: '10-Day SMA',
+                    label: rsSmaLabel,
                     data: smaValues,
                     borderColor: 'rgba(156, 163, 175, 0.75)',
                     borderWidth: 1.5,
