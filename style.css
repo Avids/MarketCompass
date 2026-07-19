@@ -734,6 +734,54 @@ body {
 }
 
 @media (max-width: 600px) {
+    .main-header {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+    
+    .logo-icon {
+        font-size: 1.8rem;
+    }
+    
+    .logo-text h1 {
+        font-size: 1.15rem;
+    }
+    
+    .header-meta {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    .update-indicator {
+        justify-content: center;
+        font-size: 0.8rem;
+    }
+    
+    #refresh-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .tabs-container {
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        gap: 0.5rem;
+        padding: 0.4rem;
+        border-radius: 10px;
+    }
+    
+    .tabs-container::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .tab-btn {
+        flex: 0 0 auto;
+        padding: 0.5rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
     .charts-grid {
         grid-template-columns: 1fr;
     }
@@ -786,6 +834,72 @@ body {
         font-weight: 600;
         color: var(--text-secondary);
         margin-right: 0.5rem;
+    }
+
+    .rs-card-header-flex {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .custom-input-group {
+        flex-direction: column;
+        align-items: stretch;
+        background: transparent;
+        border: none;
+        padding: 0;
+        gap: 0.5rem;
+        box-shadow: none;
+    }
+    
+    .custom-search-icon {
+        display: none;
+    }
+    
+    .custom-ticker-input {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 1rem;
+    }
+    
+    .custom-ticker-input:focus {
+        border-color: var(--accent-cyan);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+        outline: none;
+    }
+    
+    .custom-load-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 0.75rem;
+        font-size: 0.95rem;
+        border-radius: 12px;
+    }
+
+    .custom-ticker-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .custom-meta-badge {
+        padding: 0;
+        border-right: none;
+    }
+
+    .leaderboard-header-flex {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    .search-box {
+        width: 100%;
     }
 }
 

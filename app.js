@@ -2019,7 +2019,11 @@ function renderCustomRSChart(ticker, data) {
                     borderWidth: 2,
                     pointRadius: 0,
                     pointHoverRadius: 4,
-                    fill: false,
+                    fill: {
+                        target: 2,
+                        above: 'rgba(16, 185, 129, 0.08)',
+                        below: 'rgba(239, 68, 68, 0.08)'
+                    },
                     tension: 0.1,
                     // Color the line green above 100, red below 100
                     segment: {
