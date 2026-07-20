@@ -1944,6 +1944,7 @@ function renderCustomMetaBar(ticker, data) {
         { label: 'Ticker', value: ticker, cls: 'ticker-sym' },
         { label: 'Name', value: data.name || '—' },
         lastPrice !== null ? { label: 'Last Price', value: `$${lastPrice.toFixed(2)}` } : null,
+        data.zscore_current !== undefined && data.zscore_current !== null ? { label: 'Z-Score', value: `${data.zscore_current.toFixed(2)}σ`, cls: (data.zscore_current > 1 ? 'positive' : (data.zscore_current < -1 ? 'negative' : '')) } : null,
         data.sector ? { label: 'Sector', value: data.sector } : null,
         spread !== null ? { label: '50D MA Spread', value: `${spreadSign}${spread.toFixed(2)}%`, cls: spreadClass } : null,
         data.trailingPE ? { label: 'P/E (TTM)', value: data.trailingPE.toFixed(1) } : null,
