@@ -2,7 +2,7 @@
   "fear_greed": {
     "score": 39,
     "rating": "FEAR",
-    "timestamp": "2026-07-24T21:47:19+00:00",
+    "timestamp": "2026-07-24T23:59:54+00:00",
     "previous_close": 39,
     "one_week_ago": 37,
     "one_month_ago": 26,
@@ -8233,7 +8233,7 @@
           101.34,
           100.88,
           101.37,
-          101.35
+          101.34
         ]
       },
       "50d": {
@@ -11443,7 +11443,7 @@
       "wk": 1.32,
       "mo": 3.82,
       "yr": 22.32,
-      "vol": "393.2K",
+      "vol": "392.5K",
       "holdings": [
         {
           "ticker": "MO",
@@ -11754,28 +11754,7 @@
       "mo": 0.0,
       "yr": 0.0,
       "vol": "81.8K",
-      "holdings": [
-        {
-          "ticker": "HDFCBANK.NS",
-          "pct": 7.5
-        },
-        {
-          "ticker": "RELIANCE.NS",
-          "pct": 6.7
-        },
-        {
-          "ticker": "ICICIBANK.NS",
-          "pct": 5.1
-        },
-        {
-          "ticker": "INFY.NS",
-          "pct": 4.1
-        },
-        {
-          "ticker": "BHARTIARTL.NS",
-          "pct": 3.9
-        }
-      ]
+      "holdings": []
     },
     {
       "ticker": "EWI",
@@ -15872,5 +15851,5 @@
       "fetched_at": "2026-07-18T15:55:23.884033"
     }
   },
-  "last_updated": "2026-07-24T22:11:20.393722"
+  "last_updated": "2026-07-25T22:00:49.996000"
 }
