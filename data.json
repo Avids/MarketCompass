@@ -2,7 +2,7 @@
   "fear_greed": {
     "score": 42,
     "rating": "FEAR",
-    "timestamp": "2026-07-31T21:51:30+00:00",
+    "timestamp": "2026-07-31T23:59:52+00:00",
     "previous_close": 38,
     "one_week_ago": 41,
     "one_month_ago": 29,
@@ -8233,7 +8233,7 @@
           104.06,
           106.05,
           105.46,
-          104.98
+          104.99
         ]
       },
       "50d": {
@@ -8339,7 +8339,7 @@
           98.57,
           100.45,
           99.89,
-          99.44
+          99.45
         ]
       }
     },
@@ -11748,13 +11748,34 @@
     {
       "ticker": "PIN",
       "description": "India",
-      "price": 19.86,
+      "price": 23.98,
       "dy": "-",
       "wk": 0.0,
       "mo": 0.0,
       "yr": 0.0,
-      "vol": "-",
-      "holdings": []
+      "vol": "81.8K",
+      "holdings": [
+        {
+          "ticker": "HDFCBANK.NS",
+          "pct": 7.5
+        },
+        {
+          "ticker": "RELIANCE.NS",
+          "pct": 6.7
+        },
+        {
+          "ticker": "ICICIBANK.NS",
+          "pct": 5.1
+        },
+        {
+          "ticker": "INFY.NS",
+          "pct": 4.1
+        },
+        {
+          "ticker": "BHARTIARTL.NS",
+          "pct": 3.9
+        }
+      ]
     },
     {
       "ticker": "EWI",
@@ -12017,9 +12038,9 @@
       "description": "BRIC",
       "price": 41.1,
       "dy": "163.0%",
-      "wk": 2.23,
-      "mo": 5.97,
-      "yr": 1.88,
+      "wk": 2.24,
+      "mo": 5.98,
+      "yr": 1.89,
       "vol": "19.5K",
       "holdings": [
         {
@@ -15851,5 +15872,5 @@
       "fetched_at": "2026-07-18T15:55:23.884033"
     }
   },
-  "last_updated": "2026-07-31T22:11:19.149297"
+  "last_updated": "2026-08-01T22:03:23.909699"
 }
