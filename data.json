@@ -2,7 +2,7 @@
   "fear_greed": {
     "score": 63,
     "rating": "GREED",
-    "timestamp": "2026-08-07T21:25:37+00:00",
+    "timestamp": "2026-08-07T23:59:47+00:00",
     "previous_close": 59,
     "one_week_ago": 45,
     "one_month_ago": 39,
@@ -11748,34 +11748,13 @@
     {
       "ticker": "PIN",
       "description": "India",
-      "price": 23.98,
+      "price": 19.86,
       "dy": "-",
       "wk": 0.0,
       "mo": 0.0,
       "yr": 0.0,
-      "vol": "81.8K",
-      "holdings": [
-        {
-          "ticker": "HDFCBANK.NS",
-          "pct": 7.5
-        },
-        {
-          "ticker": "RELIANCE.NS",
-          "pct": 6.7
-        },
-        {
-          "ticker": "ICICIBANK.NS",
-          "pct": 5.1
-        },
-        {
-          "ticker": "INFY.NS",
-          "pct": 4.1
-        },
-        {
-          "ticker": "BHARTIARTL.NS",
-          "pct": 3.9
-        }
-      ]
+      "vol": "-",
+      "holdings": []
     },
     {
       "ticker": "EWI",
@@ -12133,7 +12112,7 @@
       "wk": -0.61,
       "mo": -0.54,
       "yr": 9.18,
-      "vol": "408.3K",
+      "vol": "407.8K",
       "holdings": [
         {
           "ticker": "AGPXX",
@@ -15876,5 +15855,5 @@
       "fetched_at": "2026-07-18T15:55:23.884033"
     }
   },
-  "last_updated": "2026-08-07T21:45:46.373607"
+  "last_updated": "2026-08-08T21:36:31.964463"
 }
