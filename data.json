@@ -2,7 +2,7 @@
   "fear_greed": {
     "score": 41,
     "rating": "FEAR",
-    "timestamp": "2026-09-04T22:39:36+00:00",
+    "timestamp": "2026-09-04T23:59:43+00:00",
     "previous_close": 35,
     "one_week_ago": 52,
     "one_month_ago": 59,
@@ -5750,8 +5750,8 @@
           133.19,
           130.76,
           128.84,
-          133.99,
-          131.26
+          134.17,
+          131.43
         ]
       },
       "50d": {
@@ -5856,8 +5856,8 @@
           149.53,
           146.8,
           144.65,
-          150.43,
-          147.36
+          150.63,
+          147.56
         ]
       }
     },
@@ -8331,7 +8331,7 @@
           100.66,
           100.98,
           99.96,
-          100.65
+          100.64
         ]
       }
     },
@@ -10799,23 +10799,23 @@
       "holdings": [
         {
           "ticker": "NVDA",
-          "pct": 20.8
+          "pct": 22.6
         },
         {
           "ticker": "TSM",
-          "pct": 9.6
+          "pct": 9.7
         },
         {
           "ticker": "AVGO",
-          "pct": 6.6
-        },
-        {
-          "ticker": "AMD",
-          "pct": 5.7
+          "pct": 6.1
         },
         {
           "ticker": "MU",
-          "pct": 5.2
+          "pct": 5.5
+        },
+        {
+          "ticker": "AMD",
+          "pct": 5.4
         }
       ]
     },
@@ -10823,7 +10823,7 @@
       "ticker": "CIBR",
       "description": "Cybersecurity",
       "price": 94.59,
-      "dy": "43.0%",
+      "dy": "39.0%",
       "wk": -5.55,
       "mo": -3.33,
       "yr": 29.37,
@@ -10831,23 +10831,23 @@
       "holdings": [
         {
           "ticker": "PANW",
-          "pct": 9.2
-        },
-        {
-          "ticker": "FTNT",
-          "pct": 8.9
+          "pct": 9.7
         },
         {
           "ticker": "CRWD",
-          "pct": 8.0
+          "pct": 9.0
+        },
+        {
+          "ticker": "FTNT",
+          "pct": 8.8
         },
         {
           "ticker": "CSCO",
-          "pct": 7.5
+          "pct": 6.5
         },
         {
           "ticker": "AVGO",
-          "pct": 6.9
+          "pct": 5.9
         }
       ]
     },
@@ -10951,31 +10951,31 @@
       "ticker": "AIQ",
       "description": "AI & Big Data",
       "price": 64.32,
-      "dy": "8.0%",
+      "dy": "7.0%",
       "wk": 0.03,
       "mo": 1.53,
       "yr": 41.61,
       "vol": "1.2M",
       "holdings": [
         {
-          "ticker": "000660.KQ",
-          "pct": 6.3
+          "ticker": "PLTR",
+          "pct": 4.1
         },
         {
-          "ticker": "MU",
-          "pct": 5.6
+          "ticker": "MSFT",
+          "pct": 3.6
         },
         {
-          "ticker": "AMD",
-          "pct": 5.1
+          "ticker": "ORCL",
+          "pct": 3.4
         },
         {
-          "ticker": "005930.KQ",
-          "pct": 4.8
+          "ticker": "SPCX",
+          "pct": 3.3
         },
         {
-          "ticker": "CSCO",
-          "pct": 4.2
+          "ticker": "NFLX",
+          "pct": 3.2
         }
       ]
     },
@@ -10991,23 +10991,23 @@
       "holdings": [
         {
           "ticker": "000660.KQ",
-          "pct": 8.1
+          "pct": 7.9
         },
         {
           "ticker": "MU",
-          "pct": 6.6
+          "pct": 7.2
         },
         {
           "ticker": "AMD",
-          "pct": 5.3
+          "pct": 4.9
+        },
+        {
+          "ticker": "MRVL",
+          "pct": 3.7
         },
         {
           "ticker": "TSM",
           "pct": 3.7
-        },
-        {
-          "ticker": "SIMO",
-          "pct": 3.6
         }
       ]
     },
@@ -11015,7 +11015,7 @@
       "ticker": "DIA",
       "description": "Dow 30",
       "price": 534.08,
-      "dy": "137.0%",
+      "dy": "138.0%",
       "wk": 0.47,
       "mo": -0.94,
       "yr": 19.18,
@@ -11027,19 +11027,19 @@
         },
         {
           "ticker": "CAT",
-          "pct": 9.2
+          "pct": 8.9
         },
         {
           "ticker": "MSFT",
-          "pct": 5.3
-        },
-        {
-          "ticker": "UNH",
-          "pct": 4.7
+          "pct": 5.7
         },
         {
           "ticker": "AMGN",
-          "pct": 4.4
+          "pct": 4.8
+        },
+        {
+          "ticker": "UNH",
+          "pct": 4.3
         }
       ]
     },
@@ -11431,15 +11431,23 @@
       "ticker": "DVY",
       "description": "DJ Dividend",
       "price": 164.25,
-      "dy": "326.0%",
+      "dy": "324.0%",
       "wk": 1.08,
       "mo": 1.45,
       "yr": 20.08,
       "vol": "276.2K",
       "holdings": [
         {
-          "ticker": "PRU",
+          "ticker": "PFE",
+          "pct": 2.3
+        },
+        {
+          "ticker": "HPQ",
           "pct": 2.2
+        },
+        {
+          "ticker": "PRU",
+          "pct": 2.1
         },
         {
           "ticker": "TROW",
@@ -11448,14 +11456,6 @@
         {
           "ticker": "MO",
           "pct": 2.1
-        },
-        {
-          "ticker": "HPQ",
-          "pct": 2.0
-        },
-        {
-          "ticker": "PFE",
-          "pct": 2.0
         }
       ]
     },
@@ -11506,10 +11506,10 @@
       "ticker": "ETHE",
       "description": "Ethereum Trust",
       "price": 19.76,
-      "dy": "132.0%",
-      "wk": -1.05,
-      "mo": 27.81,
-      "yr": -43.97,
+      "dy": "111.0%",
+      "wk": -0.92,
+      "mo": 27.99,
+      "yr": -43.89,
       "vol": "2.1M",
       "holdings": []
     },
@@ -11517,7 +11517,7 @@
       "ticker": "EWA",
       "description": "Australia",
       "price": 30.23,
-      "dy": "289.0%",
+      "dy": "283.0%",
       "wk": 0.7,
       "mo": -0.59,
       "yr": 15.78,
@@ -11525,23 +11525,23 @@
       "holdings": [
         {
           "ticker": "BHP.AX",
-          "pct": 14.6
+          "pct": 16.3
         },
         {
           "ticker": "CBA.AX",
-          "pct": 14.2
-        },
-        {
-          "ticker": "WBC.AX",
-          "pct": 6.2
+          "pct": 13.0
         },
         {
           "ticker": "NAB.AX",
-          "pct": 6.1
+          "pct": 5.9
+        },
+        {
+          "ticker": "WBC.AX",
+          "pct": 5.7
         },
         {
           "ticker": "ANZ.AX",
-          "pct": 5.4
+          "pct": 5.5
         }
       ]
     },
@@ -11549,7 +11549,7 @@
       "ticker": "EWZ",
       "description": "Brazil",
       "price": 37.86,
-      "dy": "400.0%",
+      "dy": "407.0%",
       "wk": 5.08,
       "mo": 7.13,
       "yr": 33.51,
@@ -11557,23 +11557,23 @@
       "holdings": [
         {
           "ticker": "VALE3.SA",
-          "pct": 10.0
+          "pct": 10.1
         },
         {
           "ticker": "NU",
-          "pct": 9.2
-        },
-        {
-          "ticker": "ITUB4",
-          "pct": 8.4
-        },
-        {
-          "ticker": "PETR4",
-          "pct": 6.8
+          "pct": 9.5
         },
         {
           "ticker": "PETR3.SA",
           "pct": 6.6
+        },
+        {
+          "ticker": "BBDC4",
+          "pct": 3.6
+        },
+        {
+          "ticker": "B3SA3.SA",
+          "pct": 3.4
         }
       ]
     },
@@ -11581,7 +11581,7 @@
       "ticker": "EWC",
       "description": "Canada",
       "price": 62.04,
-      "dy": "127.0%",
+      "dy": "122.0%",
       "wk": 0.99,
       "mo": 1.21,
       "yr": 27.9,
@@ -11589,23 +11589,23 @@
       "holdings": [
         {
           "ticker": "RY",
-          "pct": 9.5
+          "pct": 9.0
         },
         {
           "ticker": "TD",
-          "pct": 6.5
+          "pct": 6.3
         },
         {
           "ticker": "SHOP",
-          "pct": 4.7
+          "pct": 5.7
         },
         {
           "ticker": "BMO.TO",
-          "pct": 4.0
+          "pct": 3.7
         },
         {
-          "ticker": "ENB.TO",
-          "pct": 3.9
+          "ticker": "BNS.TO",
+          "pct": 3.6
         }
       ]
     },
@@ -11613,7 +11613,7 @@
       "ticker": "ASHR",
       "description": "China",
       "price": 34.2,
-      "dy": "222.0%",
+      "dy": "219.0%",
       "wk": -0.38,
       "mo": -2.62,
       "yr": 10.84,
@@ -11621,22 +11621,22 @@
       "holdings": [
         {
           "ticker": "300750.SZ",
-          "pct": 4.1
-        },
-        {
-          "ticker": "300308.SZ",
           "pct": 3.7
         },
         {
+          "ticker": "300308.SZ",
+          "pct": 3.6
+        },
+        {
           "ticker": "600519.SS",
-          "pct": 3.3
+          "pct": 3.1
         },
         {
           "ticker": "601318.SS",
           "pct": 2.3
         },
         {
-          "ticker": "601899.SS",
+          "ticker": "300502.SZ",
           "pct": 2.1
         }
       ]
@@ -11645,7 +11645,7 @@
       "ticker": "EWQ",
       "description": "France",
       "price": 45.69,
-      "dy": "283.0%",
+      "dy": "288.0%",
       "wk": -0.37,
       "mo": -4.61,
       "yr": 10.47,
@@ -11653,23 +11653,23 @@
       "holdings": [
         {
           "ticker": "SU.PA",
-          "pct": 8.3
+          "pct": 8.7
         },
         {
           "ticker": "TTE.PA",
-          "pct": 7.9
+          "pct": 7.8
         },
         {
           "ticker": "AIR.PA",
           "pct": 6.3
         },
         {
-          "ticker": "MC.PA",
+          "ticker": "SAF.PA",
           "pct": 6.2
         },
         {
-          "ticker": "SAF.PA",
-          "pct": 6.1
+          "ticker": "MC.PA",
+          "pct": 6.0
         }
       ]
     },
@@ -11677,7 +11677,7 @@
       "ticker": "EWG",
       "description": "Germany",
       "price": 43.89,
-      "dy": "194.0%",
+      "dy": "188.0%",
       "wk": -0.77,
       "mo": -0.3,
       "yr": 8.3,
@@ -11685,23 +11685,23 @@
       "holdings": [
         {
           "ticker": "SIE.DE",
-          "pct": 12.4
+          "pct": 12.1
         },
         {
           "ticker": "SAP.DE",
-          "pct": 9.7
+          "pct": 11.3
         },
         {
           "ticker": "ALV.DE",
-          "pct": 9.7
+          "pct": 10.0
         },
         {
           "ticker": "ENR.DE",
-          "pct": 6.7
+          "pct": 6.4
         },
         {
           "ticker": "DTE.DE",
-          "pct": 5.4
+          "pct": 5.6
         }
       ]
     },
@@ -11709,7 +11709,7 @@
       "ticker": "EWH",
       "description": "Hong Kong",
       "price": 23.2,
-      "dy": "449.0%",
+      "dy": "451.0%",
       "wk": 1.27,
       "mo": 2.16,
       "yr": 14.88,
@@ -11717,23 +11717,23 @@
       "holdings": [
         {
           "ticker": "1299.HK",
-          "pct": 21.1
+          "pct": 23.2
         },
         {
           "ticker": "0388.HK",
-          "pct": 15.3
+          "pct": 15.6
         },
         {
           "ticker": "0001.HK",
-          "pct": 6.2
-        },
-        {
-          "ticker": "0669.HK",
-          "pct": 5.1
+          "pct": 5.7
         },
         {
           "ticker": "2388.HK",
-          "pct": 5.1
+          "pct": 4.7
+        },
+        {
+          "ticker": "0002.HK",
+          "pct": 4.4
         }
       ]
     },
@@ -11752,7 +11752,7 @@
       "ticker": "EWI",
       "description": "Italy",
       "price": 61.86,
-      "dy": "305.0%",
+      "dy": "301.0%",
       "wk": -0.67,
       "mo": -2.35,
       "yr": 26.65,
@@ -11760,23 +11760,23 @@
       "holdings": [
         {
           "ticker": "UCG.MI",
-          "pct": 16.3
+          "pct": 16.8
         },
         {
           "ticker": "ISP.MI",
-          "pct": 13.2
+          "pct": 13.6
         },
         {
           "ticker": "ENEL.MI",
-          "pct": 10.8
-        },
-        {
-          "ticker": "ENI.MI",
-          "pct": 5.3
+          "pct": 10.3
         },
         {
           "ticker": "RACE.MI",
-          "pct": 4.9
+          "pct": 5.2
+        },
+        {
+          "ticker": "ENI.MI",
+          "pct": 5.0
         }
       ]
     },
@@ -11784,7 +11784,7 @@
       "ticker": "EWJ",
       "description": "Japan",
       "price": 98.28,
-      "dy": "386.0%",
+      "dy": "372.0%",
       "wk": 2.5,
       "mo": 1.42,
       "yr": 29.47,
@@ -11792,18 +11792,18 @@
       "holdings": [
         {
           "ticker": "8306.T",
-          "pct": 4.7
+          "pct": 4.6
         },
         {
           "ticker": "7203.T",
-          "pct": 3.6
-        },
-        {
-          "ticker": "8035.T",
-          "pct": 3.0
+          "pct": 3.5
         },
         {
           "ticker": "8316.T",
+          "pct": 3.0
+        },
+        {
+          "ticker": "8035.T",
           "pct": 3.0
         },
         {
@@ -11824,23 +11824,23 @@
       "holdings": [
         {
           "ticker": "GMEXICOB.MX",
-          "pct": 14.4
+          "pct": 16.6
         },
         {
           "ticker": "GFNORTEO.MX",
-          "pct": 11.3
+          "pct": 11.1
         },
         {
           "ticker": "FEMSAUBD.MX",
-          "pct": 8.8
-        },
-        {
-          "ticker": "AMXB.MX",
           "pct": 8.3
         },
         {
+          "ticker": "AMXB.MX",
+          "pct": 7.2
+        },
+        {
           "ticker": "CEMEXCPO.MX",
-          "pct": 4.3
+          "pct": 4.4
         }
       ]
     },
@@ -11848,7 +11848,7 @@
       "ticker": "EWP",
       "description": "Spain",
       "price": 62.75,
-      "dy": "271.0%",
+      "dy": "268.0%",
       "wk": 0.56,
       "mo": 0.14,
       "yr": 35.8,
@@ -11856,23 +11856,23 @@
       "holdings": [
         {
           "ticker": "SAN.MC",
-          "pct": 19.6
+          "pct": 19.2
         },
         {
           "ticker": "BBVA.MC",
-          "pct": 14.1
+          "pct": 14.0
         },
         {
           "ticker": "IBE.MC",
-          "pct": 13.6
+          "pct": 12.1
         },
         {
           "ticker": "CABK.MC",
           "pct": 4.6
         },
         {
-          "ticker": "REP.MC",
-          "pct": 4.5
+          "ticker": "ITX.MC",
+          "pct": 4.4
         }
       ]
     },
@@ -11880,7 +11880,7 @@
       "ticker": "EWU",
       "description": "UK",
       "price": 48.59,
-      "dy": "309.0%",
+      "dy": "310.0%",
       "wk": 0.45,
       "mo": -0.1,
       "yr": 20.91,
@@ -11888,19 +11888,19 @@
       "holdings": [
         {
           "ticker": "HSBA.L",
-          "pct": 11.2
-        },
-        {
-          "ticker": "AZN.L",
-          "pct": 7.9
+          "pct": 11.0
         },
         {
           "ticker": "SHEL.L",
-          "pct": 7.9
+          "pct": 7.8
+        },
+        {
+          "ticker": "AZN.L",
+          "pct": 7.6
         },
         {
           "ticker": "RR.L",
-          "pct": 5.1
+          "pct": 5.3
         },
         {
           "ticker": "ULVR.L",
@@ -11912,7 +11912,7 @@
       "ticker": "EFA",
       "description": "EAFE",
       "price": 108.35,
-      "dy": "319.0%",
+      "dy": "314.0%",
       "wk": 0.84,
       "mo": -0.18,
       "yr": 22.08,
@@ -11924,7 +11924,7 @@
         },
         {
           "ticker": "HSBA.L",
-          "pct": 1.7
+          "pct": 1.6
         },
         {
           "ticker": "ROP.SW",
@@ -11935,8 +11935,8 @@
           "pct": 1.3
         },
         {
-          "ticker": "NESN.SW",
-          "pct": 1.2
+          "ticker": "SHEL.L",
+          "pct": 1.1
         }
       ]
     },
@@ -11944,7 +11944,7 @@
       "ticker": "EEM",
       "description": "Emerging Mkts",
       "price": 68.7,
-      "dy": "173.0%",
+      "dy": "166.0%",
       "wk": 2.51,
       "mo": 4.66,
       "yr": 38.84,
@@ -11952,7 +11952,7 @@
       "holdings": [
         {
           "ticker": "2330.TW",
-          "pct": 15.4
+          "pct": 15.1
         },
         {
           "ticker": "005930.KQ",
@@ -11960,15 +11960,15 @@
         },
         {
           "ticker": "000660.KQ",
-          "pct": 5.6
+          "pct": 5.4
         },
         {
           "ticker": "0700.HK",
-          "pct": 3.1
+          "pct": 2.9
         },
         {
           "ticker": "9988.HK",
-          "pct": 2.1
+          "pct": 2.0
         }
       ]
     },
@@ -12008,31 +12008,31 @@
       "ticker": "BKF",
       "description": "BRIC",
       "price": 40.97,
-      "dy": "154.0%",
+      "dy": "156.0%",
       "wk": 0.99,
       "mo": -1.01,
-      "yr": -4.09,
+      "yr": -4.1,
       "vol": "1.1K",
       "holdings": [
         {
           "ticker": "0700.HK",
-          "pct": 8.4
+          "pct": 7.9
         },
         {
           "ticker": "9988.HK",
-          "pct": 5.6
-        },
-        {
-          "ticker": "00939",
-          "pct": 2.2
+          "pct": 5.5
         },
         {
           "ticker": "HDFCBANK.NS",
-          "pct": 2.0
+          "pct": 1.9
+        },
+        {
+          "ticker": "ICICIBANK.NS",
+          "pct": 1.8
         },
         {
           "ticker": "RELIANCE.NS",
-          "pct": 1.9
+          "pct": 1.7
         }
       ]
     },
@@ -12040,7 +12040,7 @@
       "ticker": "CWI",
       "description": "All World ex US",
       "price": 41.9,
-      "dy": "271.0%",
+      "dy": "264.0%",
       "wk": 1.43,
       "mo": 1.53,
       "yr": 27.54,
@@ -12052,7 +12052,7 @@
         },
         {
           "ticker": "SMSN",
-          "pct": 2.3
+          "pct": 2.5
         },
         {
           "ticker": "000660.KQ",
@@ -12064,7 +12064,7 @@
         },
         {
           "ticker": "HSBA.L",
-          "pct": 1.1
+          "pct": 1.0
         }
       ]
     },
@@ -12072,7 +12072,7 @@
       "ticker": "DBC",
       "description": "Commodities",
       "price": 31.9,
-      "dy": "253.0%",
+      "dy": "238.0%",
       "wk": 1.92,
       "mo": 10.34,
       "yr": 49.68,
@@ -12080,19 +12080,19 @@
       "holdings": [
         {
           "ticker": "AGPXX",
-          "pct": 39.0
+          "pct": 40.8
         },
         {
-          "ticker": "BRNZ26",
-          "pct": 8.7
+          "ticker": "BRNF6",
+          "pct": 8.9
         },
         {
           "ticker": "TBLL",
-          "pct": 6.4
+          "pct": 6.2
         },
         {
           "ticker": "WINZ26",
-          "pct": 1.8
+          "pct": 1.9
         }
       ]
     },
@@ -12100,7 +12100,7 @@
       "ticker": "DBA",
       "description": "Agric. Commod.",
       "price": 28.85,
-      "dy": "332.0%",
+      "dy": "311.0%",
       "wk": -1.6,
       "mo": 4.45,
       "yr": 10.05,
@@ -12108,11 +12108,11 @@
       "holdings": [
         {
           "ticker": "AGPXX",
-          "pct": 41.3
+          "pct": 43.1
         },
         {
           "ticker": "TBLL",
-          "pct": 5.0
+          "pct": 4.4
         }
       ]
     },
@@ -12164,7 +12164,7 @@
       "ticker": "SHY",
       "description": "1-3 Yr Treasuries",
       "price": 81.69,
-      "dy": "365.0%",
+      "dy": "363.0%",
       "wk": 0.05,
       "mo": 0.02,
       "yr": 2.12,
@@ -12186,7 +12186,7 @@
       "ticker": "TLT",
       "description": "20+ Yr Treasuries",
       "price": 82.21,
-      "dy": "475.0%",
+      "dy": "473.0%",
       "wk": 0.01,
       "mo": -0.28,
       "yr": -2.92,
@@ -12213,7 +12213,7 @@
       "ticker": "BND",
       "description": "Total Bond Market",
       "price": 71.95,
-      "dy": "403.0%",
+      "dy": "404.0%",
       "wk": -0.05,
       "mo": -0.27,
       "yr": 0.8,
@@ -12224,7 +12224,7 @@
       "ticker": "TIP",
       "description": "T.I.P.S.",
       "price": 106.97,
-      "dy": "447.0%",
+      "dy": "498.0%",
       "wk": 0.14,
       "mo": -0.1,
       "yr": 0.35,
@@ -15847,5 +15847,5 @@
       "fetched_at": "2026-07-18T15:55:23.884033"
     }
   },
-  "last_updated": "2026-09-04T22:56:55.986680"
+  "last_updated": "2026-09-05T22:45:00.317764"
 }
