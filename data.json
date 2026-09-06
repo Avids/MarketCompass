@@ -10795,7 +10795,7 @@
       "wk": 1.86,
       "mo": -2.69,
       "yr": 93.94,
-      "vol": "9.2M",
+      "vol": "9.5M",
       "holdings": [
         {
           "ticker": "NVDA",
@@ -11051,7 +11051,7 @@
       "wk": 0.31,
       "mo": -0.56,
       "yr": 25.41,
-      "vol": "32.5M",
+      "vol": "32.9M",
       "holdings": [
         {
           "ticker": "NVDA",
@@ -11435,7 +11435,7 @@
       "wk": 1.08,
       "mo": 1.45,
       "yr": 20.08,
-      "vol": "276.2K",
+      "vol": "276.5K",
       "holdings": [
         {
           "ticker": "PFE",
@@ -11740,13 +11740,34 @@
     {
       "ticker": "PIN",
       "description": "India",
-      "price": 19.86,
+      "price": 23.98,
       "dy": "-",
       "wk": 0.0,
       "mo": 0.0,
       "yr": 0.0,
-      "vol": "-",
-      "holdings": []
+      "vol": "81.8K",
+      "holdings": [
+        {
+          "ticker": "HDFCBANK.NS",
+          "pct": 7.5
+        },
+        {
+          "ticker": "RELIANCE.NS",
+          "pct": 6.7
+        },
+        {
+          "ticker": "ICICIBANK.NS",
+          "pct": 5.1
+        },
+        {
+          "ticker": "INFY.NS",
+          "pct": 4.1
+        },
+        {
+          "ticker": "BHARTIARTL.NS",
+          "pct": 3.9
+        }
+      ]
     },
     {
       "ticker": "EWI",
@@ -12179,7 +12200,7 @@
       "wk": -0.17,
       "mo": -0.63,
       "yr": -0.91,
-      "vol": "2.9M",
+      "vol": "3.0M",
       "holdings": []
     },
     {
@@ -12190,7 +12211,7 @@
       "wk": 0.01,
       "mo": -0.28,
       "yr": -2.92,
-      "vol": "16.5M",
+      "vol": "16.6M",
       "holdings": []
     },
     {
@@ -15847,5 +15868,5 @@
       "fetched_at": "2026-07-18T15:55:23.884033"
     }
   },
-  "last_updated": "2026-09-05T22:45:00.317764"
+  "last_updated": "2026-09-06T22:50:17.808212"
 }
