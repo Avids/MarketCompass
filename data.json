@@ -2,7 +2,7 @@
   "fear_greed": {
     "score": 37,
     "rating": "FEAR",
-    "timestamp": "2026-09-25T23:33:37+00:00",
+    "timestamp": "2026-09-25T23:59:59+00:00",
     "previous_close": 36,
     "one_week_ago": 30,
     "one_month_ago": 59,
@@ -15838,5 +15838,5 @@
       "fetched_at": "2026-07-18T15:55:23.884033"
     }
   },
-  "last_updated": "2026-09-25T23:55:00.046576"
+  "last_updated": "2026-09-26T23:28:28.545971"
 }
